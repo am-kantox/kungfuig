@@ -2,6 +2,10 @@ Given(/^I include a Kungfuig module into class$/) do
   Object.send(:remove_const, 'Test') if Kernel.const_defined?('Test')
   Test = Class.new do
     include Kungfuig
+
+    def yo param, *others
+      [param, *others]
+    end
   end
   @test = Test
 end
@@ -42,9 +46,23 @@ When(/^I try to configure with DSL I yield an exception raised$/) do
   }.to raise_error(NoMethodError)
 end
 
+When(/^I specify a plugin to be attached to "(.*?)" method$/) do |meth|
+  expect(
+    @test.configure do
+      plugin meth.to_sym do |*args|
+        puts "Hi! I am called with parameters: #{args}!"
+      end
+    end
+  ).to eq(meth.to_sym)
+end
+
 ################################################################################
 
 Then(/^I get new option "(.*?)" with value "(.*?)"$/) do |key, value|
   c = @test.config
   expect(c[key]).to eq(value)
+end
+
+Then(/^the plugin is called on "(.*?)" method execution$/) do |meth|
+  @test.new.yo 'Parameter'
 end

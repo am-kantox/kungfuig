@@ -66,3 +66,9 @@ Scenario: Configure with block via DSL should change options
   When I try to configure with DSL I yield an exception raised
 
 ################################################################################
+
+@plugin
+Scenario: Configuring plugin should force it to be called
+ Given I include a Kungfuig module into class
+  When I specify a plugin to be attached to "yo" method
+  Then the plugin is called on "yo" method execution

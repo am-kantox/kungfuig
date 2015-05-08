@@ -1,5 +1,6 @@
 require 'kungfuig/version'
 require 'hashie'
+require 'pry'
 
 module Kungfuig
   module InstanceMethods
@@ -65,6 +66,27 @@ module Kungfuig
     # @param block the block to be executed in the context of this module
     def configure &block
       instance_eval(&block)
+    end
+
+    def plugin meth
+      fail ArgumentError.new "Plugin must have a codeblock" unless block_given?
+      fail NoMethodError.new "Plugin must be attached to existing method" unless instance_methods.include? meth.to_sym
+
+      ((@plugins ||= {})[meth.to_sym] ||= []) << Proc.new
+      plugins = @plugins
+      class_eval do
+        unless instance_methods(true).include?(:"∃#{meth}")
+          alias_method :"∃#{meth}", meth.to_sym
+          define_method meth.to_sym do |*args|
+            send(:"∃#{meth}", *args).tap do |result|
+              plugins[meth.to_sym].each do |p|
+                p.call result
+              end
+            end
+          end
+        end
+
+      end
     end
     alias_method :set, :[]=
   end
