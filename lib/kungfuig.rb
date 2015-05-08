@@ -1,0 +1,71 @@
+require 'kungfuig/version'
+require 'hashie'
+
+module Kungfuig
+  module InstanceMethods
+    # Configures everything by hash or yaml from string or file. Whether code block
+    #   is passed, it is processed with @options instance.
+    # @param hos [String|Hash|Hashie::Mash] the input data to merge into options
+    def config hos = nil
+      merge_hash_or_string! hos
+      yield options if block_given?
+      options
+    end
+
+    def [] key
+      config[key]
+    end
+
+    def []= key, value
+      config({key => value})
+    end
+
+    # Options getter
+    # @return [Hashie::Mash] options
+    def options
+      @options ||= Hashie::Mash.new
+    end
+    private :options
+
+    # @param hos [Hash|String] the new values taken from hash,
+    #   mash or string (when string, should be either valid YAML file name or
+    #   string with valid YAML)
+    def merge_hash_or_string! hos
+      options.deep_merge! case hos
+                          when NilClass then {} # aka skip
+                          when Hash then hos
+                          when String
+                            begin
+                              File.exists?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos))
+                            rescue ArgumentError => ae
+                              fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
+                            rescue Psych::SyntaxError => pse
+                              fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
+                            end
+                          else
+                            Kantox::Helpers.warn 'Kantox::Roles#configure accepts either String or Hash as parameter.'
+                          end
+    end
+    private :merge_hash_or_string!
+  end
+
+  def self.included base
+    base.include InstanceMethods
+    base.extend ClassMethods
+  end
+
+  def self.extended base
+    base.include ClassMethods
+  end
+
+  module ClassMethods
+    include InstanceMethods
+
+    # A wrapper for the configuration block
+    # @param block the block to be executed in the context of this module
+    def configure &block
+      instance_eval(&block)
+    end
+    alias_method :set, :[]=
+  end
+end
