@@ -1,6 +1,6 @@
 # Kungfuig
 
-**Kungfuig** (_pronounced:_ ˌkʌŋˈfig) provides a drastically easy to plug configuration for everything.
+**Kungfuig** (_pronounced: [ˌkʌŋˈfig]_) provides a drastically easy way to plug configuration into everything.
 
 ## Usage
 
