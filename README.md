@@ -1,8 +1,53 @@
 # Kungfuig
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/kungfuig`. To experiment with that code, run `bin/console` for an interactive prompt.
+**Kungfuig** (_pronounced:_ ˌkʌŋˈfig) provides a drastically easy to plug configuration for everything.
 
-TODO: Delete this and the text above, and describe your gem
+## Usage
+
+```ruby
+class MyApp
+  include Kungfuig
+end
+
+# Load configuration file
+MyApp.config('config/myapp.yml')
+
+# Append options explicitly
+MyApp.config do |options|
+  options.value = 42
+end
+
+# load options from JSON file and execute block on it
+MyApp.config('config/myapp.json') do |options|
+  options.other_value = options[:value]
+end
+
+# DSL (note `configure` method name)
+MyApp.configure do
+  set :value, 42
+end
+```
+
+### Plugin to be called on method execution
+
+```ruby
+class MyApp
+  include Kungfuig
+  def report
+    # ...
+    42
+  end
+end
+
+MyApp.configure do
+  plugin :report do |result|
+    puts "MyApp#report returned #{result}"
+  end
+end
+
+MyApp.new.report
+#⇒ "MyApp#report returned 42"
+```
 
 ## Installation
 
@@ -20,9 +65,7 @@ Or install it yourself as:
 
     $ gem install kungfuig
 
-## Usage
-
-TODO: Write usage instructions here
+## Include/extend each class/instance you want to have configuration options
 
 ## Development
 

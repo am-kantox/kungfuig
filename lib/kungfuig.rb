@@ -1,6 +1,5 @@
 require 'kungfuig/version'
 require 'hashie'
-require 'pry'
 
 module Kungfuig
   module InstanceMethods
