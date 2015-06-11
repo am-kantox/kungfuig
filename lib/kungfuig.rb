@@ -63,7 +63,7 @@ module Kungfuig
 
     # A wrapper for the configuration block
     # @param block the block to be executed in the context of this module
-    def configure &block
+    def kungfuig &block
       instance_eval(&block)
     end
 
