@@ -43,7 +43,7 @@ module Kungfuig
                               fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
                             end
                           else
-                            Kantox::Helpers.warn 'Kantox::Roles#configure accepts either String or Hash as parameter.'
+                            fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
                           end
     end
     private :merge_hash_or_string!
