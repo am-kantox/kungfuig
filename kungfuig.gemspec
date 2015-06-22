@@ -8,6 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Kungfuig::VERSION
   spec.authors       = ['Kantox LTD']
   spec.email         = ['aleksei.matiushkin@kantox.com']
+  spec.licenses      = ['MIT']
 
   spec.summary       = 'Simple but powerful config for any gem.'
   spec.description   = 'Config with goodnesses.'
