@@ -27,7 +27,7 @@ When(/^I pass new option "(.*?)" with value "(.*?)" via block$/) do |key, value|
 end
 
 When(/^I pass new option "(.*?)" with value "(.*?)" via block’s DSL$/) do |key, value|
-  @test.configure do
+  @test.kungfuig do
     set key, value
   end
 end
@@ -48,7 +48,7 @@ end
 
 When(/^I specify a plugin to be attached to "(.*?)" method$/) do |meth|
   expect(
-    @test.configure do
+    @test.kungfuig do
       plugin meth.to_sym do |*args|
         puts "Hi! I am called with parameters: #{args}!"
       end

@@ -2,6 +2,8 @@
 
 **Kungfuig** (_pronounced: [ˌkʌŋˈfig]_) provides a drastically easy way to plug configuration into everything.
 
+Configuration is thread-safe (starting with `0.2.0`).
+
 ## Usage
 
 ```ruby
@@ -22,8 +24,8 @@ MyApp.config('config/myapp.json') do |options|
   options.other_value = options[:value]
 end
 
-# DSL (note `configure` method name)
-MyApp.configure do
+# DSL (note `kungfuig` method name)
+MyApp.kungfuig do
   set :value, 42
 end
 ```

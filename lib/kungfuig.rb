@@ -1,23 +1,20 @@
 require 'kungfuig/version'
+require 'yaml'
 require 'hashie'
 
 module Kungfuig
+  MX = Mutex.new
+
   module InstanceMethods
     # Configures everything by hash or yaml from string or file. Whether code block
     #   is passed, it is processed with @options instance.
     # @param hos [String|Hash|Hashie::Mash] the input data to merge into options
     def config hos = nil
-      merge_hash_or_string! hos
-      yield options if block_given?
-      options
-    end
-
-    def [] key
-      config[key]
-    end
-
-    def []= key, value
-      config({key => value})
+      MX.synchronize {
+        merge_hash_or_string! hos
+        yield options if block_given?
+        options
+      }
     end
 
     # Options getter
@@ -26,6 +23,18 @@ module Kungfuig
       @options ||= Hashie::Mash.new
     end
     private :options
+
+    def option key
+      config[key]
+    end
+
+    def option! key, value
+      config({key => value})
+    end
+
+    def option? key
+      !option.nil?
+    end
 
     # @param hos [Hash|String] the new values taken from hash,
     #   mash or string (when string, should be either valid YAML file name or
@@ -52,6 +61,10 @@ module Kungfuig
   def self.included base
     base.include InstanceMethods
     base.extend ClassMethods
+    if (base.instance_methods & [:[], :[]=]).empty?
+      base.send :alias_method, :[], :option
+      base.send :alias_method, :[]=, :option!
+    end
   end
 
   def self.extended base
@@ -87,6 +100,6 @@ module Kungfuig
 
       end
     end
-    alias_method :set, :[]=
+    alias_method :set, :option!
   end
 end
