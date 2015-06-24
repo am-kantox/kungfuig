@@ -41,7 +41,7 @@ class MyApp
   end
 end
 
-MyApp.configure do
+MyApp.kungfuig do
   plugin :report do |result|
     puts "MyApp#report returned #{result}"
   end
