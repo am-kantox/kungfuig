@@ -72,3 +72,25 @@ Scenario: Configuring plugin should force it to be called
  Given I include a Kungfuig module into class
   When I specify a plugin to be attached to "yo" method
   Then the plugin is called on "yo" method execution
+
+################################################################################
+
+@defaults
+Scenario: Default value lookup should be possible
+ Given I include a Kungfuig module into instance
+  When I pass new file "features/support/test.yml" to config
+   And I try to retrieve a value from a “branch” that has no such value
+  Then the value from a default branch is retrieven
+
+@defaults
+Scenario: Specific value lookup should take precedence over default
+ Given I include a Kungfuig module into instance
+  When I pass new file "features/support/test.yml" to config
+   And I try to retrieve a value from a “branch” that has that value
+  Then the value from a specific branch is retrieven
+
+@defaults
+Scenario: Value deep set works fine
+ Given I include a Kungfuig module into instance
+  When I try to set a value deeply inside options in inexisting section
+  Then the value from a specific branch is set

@@ -1,1 +1,9 @@
 option_1: value_1
+
+foo:
+  bar: 42
+  baz: 3.14
+
+production:
+  foo:
+    baz: 2.71

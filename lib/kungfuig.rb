@@ -24,16 +24,45 @@ module Kungfuig
     end
     private :options
 
-    def option key
-      config[key]
+    # Accepts:
+    #     option :foo, :bar: baz
+    #     option [:foo, 'bar', 'baz']
+    #     option 'foo.bar.baz'
+    #     option 'foo::bar::baz'
+    def option *keys
+      key = keys.join('.').gsub(/::/, '.').split('.')
+
+      MX.synchronize {
+        # options.foo!.bar!.baz!
+        build = [key, key[1..-1]].map do |candidate|
+          candidate.inject(options.dup) do |memo, k|
+            memo.public_send("#{k}") unless memo.nil?
+          end
+        end.reduce(nil) do |memo, candidate|
+          memo || candidate
+        end
+      }
     end
 
-    def option! key, value
-      config({key => value})
+    # Accepts:
+    #     option! [:foo, 'bar', 'baz'], value
+    #     option! 'foo.bar.baz', value
+    #     option! 'foo::bar::baz', value
+    def option! keys, value
+      key = (keys.is_a?(Array) ? keys.join('.') : keys).gsub(/::/, '.').split('.')
+      last = key.pop
+
+      MX.synchronize {
+        # options.foo!.bar!.baz! = value
+        build = key.inject(options) do |memo, k|
+          memo.public_send("#{k}!")
+        end
+        build[last] = value
+      }
     end
 
-    def option? key
-      !option.nil?
+    def option? *keys
+      !option(*keys).nil?
     end
 
     # @param hos [Hash|String] the new values taken from hash,

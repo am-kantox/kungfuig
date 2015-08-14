@@ -2,6 +2,7 @@
 
 require 'bundler/setup'
 require 'rspec/expectations'
+require 'pry'
 require 'kungfuig'
 
 MAX_SCENARIOS = 10
