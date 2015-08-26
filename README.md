@@ -2,6 +2,8 @@
 
 **Kungfuig** (_pronounced: [ˌkʌŋˈfig]_) provides a drastically easy way to plug configuration into everything.
 
+[![Build Status](https://travis-ci.org/am-kantox/kungfuig.svg\?branch\=master)](https://travis-ci.org/am-kantox/kungfuig)
+
 Configuration is thread-safe (starting with `0.2.0`).
 
 ## Usage
