@@ -25,7 +25,7 @@ module Kungfuig
     private :options
 
     # Accepts:
-    #     option :foo, :bar: baz
+    #     option :foo, :bar, 'baz'
     #     option [:foo, 'bar', 'baz']
     #     option 'foo.bar.baz'
     #     option 'foo::bar::baz'
@@ -34,13 +34,11 @@ module Kungfuig
 
       MX.synchronize {
         # options.foo!.bar!.baz!
-        build = [key, key[1..-1]].map do |candidate|
+        [key, key[1..-1]].map do |candidate|
           candidate.inject(options.dup) do |memo, k|
-            memo.public_send("#{k}") unless memo.nil?
+            memo.public_send(k.to_s) unless memo.nil?
           end
-        end.reduce(nil) do |memo, candidate|
-          memo || candidate
-        end
+        end.detect { |e| e }
       }
     end
 
@@ -74,7 +72,9 @@ module Kungfuig
                           when Hash then hos
                           when String
                             begin
-                              File.exists?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos))
+                              File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos)).tap do |opts|
+                                fail ArgumentError.new "#{__callee__} expects valid YAML configuration file or YAML string." unless opts.is_a?(Hash)
+                              end
                             rescue ArgumentError => ae
                               fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
                             rescue Psych::SyntaxError => pse

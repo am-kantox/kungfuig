@@ -14,9 +14,9 @@ Gem::Specification.new do |spec|
   spec.description   = 'Config with goodnesses.'
   spec.homepage      = 'http://kantox.com'
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(/\A(test|spec|features)\//) }
+  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\A(test|spec|features)/}) }
   spec.bindir        = 'bin'
-  spec.executables   = spec.files.grep(/\Abin\//) { |f| File.basename(f) }
+  spec.executables   = spec.files.grep(%r{\Abin/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
   # spec.metadata['allowed_push_host'] = 'http://mygemserver.com' if spec.respond_to?(:metadata)
