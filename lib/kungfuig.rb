@@ -1,10 +1,50 @@
-require 'kungfuig/version'
 require 'yaml'
 require 'hashie'
+
+require 'kungfuig/version'
+require 'kungfuig/aspector'
 
 module Kungfuig
   ASPECT_PREFIX = '♻_'.freeze
   MX = Mutex.new
+
+  # rubocop:disable Style/VariableName
+  # rubocop:disable Style/MethodName
+  def ✍(receiver, method, result, *args)
+    require 'logger'
+    @✍ ||= Kernel.const_defined?('Rails') && Rails.logger || Logger.new($stdout)
+    "[#{receiver.class}##{method}] called with [#{args.inspect}] and returned [#{result || 'nothing (was it before aspect?)'}]".tap do |m|
+      @✍.debug m
+    end
+  end
+  module_function :✍
+  # rubocop:enable Style/MethodName
+  # rubocop:enable Style/VariableName
+
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength
+  def load_stuff hos
+    case hos
+    when NilClass then Hashie::Mash.new # aka skip
+    when Hash then Hashie::Mash.new(hos)
+    when String
+      begin
+        File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos)).tap do |opts|
+          fail ArgumentError.new "#{__callee__} expects valid YAML configuration file or YAML string." unless opts.is_a?(Hash)
+        end
+      rescue ArgumentError
+        fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
+      rescue Psych::SyntaxError
+        fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
+      end
+    when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
+    else
+      fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
+    end
+  end
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/CyclomaticComplexity
+  module_function :load_stuff
 
   module InstanceMethods
     # Configures everything by hash or yaml from string or file. Whether code block
@@ -64,34 +104,12 @@ module Kungfuig
       !option(*keys).nil?
     end
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/MethodLength
     # @param hos [Hash|String] the new values taken from hash,
     #   mash or string (when string, should be either valid YAML file name or
     #   string with valid YAML)
     def merge_hash_or_string! hos
-      options.deep_merge! case hos
-                          when NilClass then Hashie::Mash.new # aka skip
-                          when Hash then Hashie::Mash.new(hos)
-                          when String
-                            begin
-                              File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos)).tap do |opts|
-                                fail ArgumentError.new "#{__callee__} expects valid YAML configuration file or YAML string." unless opts.is_a?(Hash)
-                              end
-                            rescue ArgumentError
-                              fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
-                            rescue Psych::SyntaxError
-                              fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
-                            end
-                          when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
-                          else
-                            fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
-                          end
+      options.deep_merge! Kungfuig.load_stuff hos
     end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/AbcSize
     private :merge_hash_or_string!
   end
 
@@ -130,7 +148,7 @@ module Kungfuig
           def #{meth}(*args, &cb)
             ps = self.class.aspects(:#{meth}).merge((class << self; self; end).aspects(:#{meth})) { |_, c, ec| c | ec }
             ps[:before].each do |p|
-              p.call(self, :#{meth}, *args) # FIXME: allow argument modification!!!
+              p.call(self, :#{meth}, nil, *args) # FIXME: allow argument modification!!!
             end
             send(:#{ASPECT_PREFIX}#{meth}, *args, &cb).tap do |result|
               ps[:after].each do |p|

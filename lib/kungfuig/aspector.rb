@@ -1,5 +1,3 @@
-require_relative '../kungfuig'
-
 module Kungfuig
   # Generic helper for massive attaching aspects
   module Aspector
@@ -15,13 +13,30 @@ module Kungfuig
           end
         end.reduce(&:-)
       end
+
+      def remap_hash_for_easy_iteration hash
+        hash = hash.each_with_object(Hashie::Mash.new) do |(k, v), memo|
+          v.each { |m, c| memo.public_send("#{m}!")[k] = c }
+        end unless (hash.keys - %w(before after exclude)).empty?
+        hash.each_with_object({}) do |(k, v), memo|
+          v.each { |m, h| ((memo[h] ||= {})[k.to_sym] ||= []) << m }
+        end
+      end
+
+      def proc_instance string
+        m, k = string.split('#').reverse
+        (k ? Kernel.const_get(k).method(m) : method(m)).to_proc
+      end
     end
 
     def attach(to, before: nil, after: nil, exclude: nil)
-      raise ArgumentError, "Trying to attach nothing to #{klazz}. I need a block!" unless block_given?
+      klazz = case to
+              when String then Kernel.const_get(to) # we are ready to get a class name
+              when Class then to                    # got a class! wow, somebody has the documentation read
+              else class << to; self; end           # attach to klazz’s eigenclass if object given
+              end
 
-      klazz = to.is_a?(Class) ? to : class << to; self; end # attach to klazz’s eigenclass if object given
-
+      raise ArgumentError, "Trying to attach nothing to #{klazz}##{to}. I need a block!" unless block_given?
       klazz.send(:include, Kungfuig::Aspector) unless klazz.ancestors.include? Kungfuig::Aspector
       cb = Proc.new
 
@@ -36,6 +51,26 @@ module Kungfuig
       klazz.aspects
     end
     module_function :attach
+
+    # 'Test':
+    #   after:
+    #     'yo': 'YoCalledAsyncHandler#process'
+    #     'yo1' : 'YoCalledAsyncHandler#process'
+    #   before:
+    #     'yo': 'YoCalledAsyncHandler#process'
+    def bulk(hos)
+      Kungfuig.load_stuff(hos).map do |klazz, hash|
+        next if hash.empty?
+        H.new.remap_hash_for_easy_iteration(hash).each do |handler, methods|
+          begin
+            attach(klazz, **methods, &H.new.proc_instance(handler))
+          rescue => e
+            raise ArgumentError, "Bad input to Kungfuig::Aspector##{__callee__}. Original exception: “#{e.message}”."
+          end
+        end
+      end
+    end
+    module_function :bulk
 
     private_constant :H
   end
