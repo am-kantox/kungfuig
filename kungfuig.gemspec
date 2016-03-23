@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   # spec.metadata['allowed_push_host'] = 'http://mygemserver.com' if spec.respond_to?(:metadata)
 
   spec.add_dependency 'hashie', '~> 3'
+  spec.add_dependency 'sidekiq', '~> 3.5', '>= 3.5.2'
 
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'rake', '~> 10.0'

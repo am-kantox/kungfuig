@@ -130,11 +130,11 @@ module Kungfuig
           def #{meth}(*args, &cb)
             ps = self.class.aspects(:#{meth}).merge((class << self; self; end).aspects(:#{meth})) { |_, c, ec| c | ec }
             ps[:before].each do |p|
-              p.call(*args) # TODO: make prependers able to change args!!!
+              p.call(self, :#{meth}, *args) # FIXME: allow argument modification!!!
             end
             send(:#{ASPECT_PREFIX}#{meth}, *args, &cb).tap do |result|
               ps[:after].each do |p|
-                p.call result, *args
+                p.call self, :#{meth}, result, *args
               end
             end
           end
