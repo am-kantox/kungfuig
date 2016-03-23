@@ -47,18 +47,18 @@ When(/^I try to configure with DSL I yield an exception raised$/) do
   }.to raise_error(NoMethodError)
 end
 
-When(/^I specify a plugin to be attached to "(.*?)" method$/) do |meth|
+When(/^I specify an aspect to be attached to "(.*?)" method$/) do |meth|
   expect(
     @test.kungfuig do
-      plugin(meth.to_sym) do |*args|
-        puts "Hi! I am KUNGFUIG::PLUGIN called with parameters: #{args}!"
+      aspect(meth.to_sym) do |*args|
+        puts "Hi! I am KUNGFUIG::ASPECT called with parameters: #{args}!"
       end
     end
   ).to eq(meth.to_sym)
 
   expect(
-    @test.plugin(meth.to_sym) do |*args|
-      puts "Hi! I am PLUGIN called with parameters: #{args}!"
+    @test.aspect(meth.to_sym) do |*args|
+      puts "Hi! I am ASPECT called with parameters: #{args}!"
     end
   ).to eq(meth.to_sym)
 end
@@ -82,7 +82,7 @@ Then(/^I get new option "(.*?)" with value "(.*?)"$/) do |key, value|
   expect(c[key]).to eq(value)
 end
 
-Then(/^the plugin is called on "(.*?)" method execution$/) do |meth|
+Then(/^the aspect is called on "(.*?)" method execution$/) do |meth|
   expect(
     @test.new.yo('Parameter', 42, a: 1, b: 2, **{c: 3, d: 4}) { 'block-value' }
   ).to eq(["Parameter", [42], {a: 1, b: 2, c: 3, d: 4}, "block-value"])

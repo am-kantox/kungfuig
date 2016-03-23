@@ -32,7 +32,7 @@ MyApp.kungfuig do
 end
 ```
 
-### Plugin to be called on method execution
+### Aspect to be called on method execution
 
 ```ruby
 class MyApp
@@ -44,7 +44,7 @@ class MyApp
 end
 
 MyApp.kungfuig do
-  plugin :report do |result|
+  aspect :report do |result|
     puts "MyApp#report returned #{result}"
   end
 end

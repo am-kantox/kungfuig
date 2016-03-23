@@ -67,11 +67,11 @@ Scenario: Configure with block via DSL should change options
 
 ################################################################################
 
-@plugin
-Scenario: Configuring plugin should force it to be called
+@aspects
+Scenario: Configuring aspect should force it to be called
  Given I include a Kungfuig module into class
-  When I specify a plugin to be attached to "yo" method
-  Then the plugin is called on "yo" method execution
+  When I specify an aspect to be attached to "yo" method
+  Then the aspect is called on "yo" method execution
 
 ################################################################################
 

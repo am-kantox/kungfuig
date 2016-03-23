@@ -3,7 +3,7 @@ require 'yaml'
 require 'hashie'
 
 module Kungfuig
-  PLUGIN_PREFIX = '♻_'.freeze
+  ASPECT_PREFIX = '♻_'.freeze
   MX = Mutex.new
 
   module InstanceMethods
@@ -118,21 +118,21 @@ module Kungfuig
     end
 
     # rubocop:disable Metrics/MethodLength
-    def plugin meth, after = true
-      fail ArgumentError.new "Plugin must have a codeblock" unless block_given?
-      fail NoMethodError.new "Plugin must be attached to existing method" unless instance_methods.include? meth.to_sym
+    def aspect meth, after = true
+      fail ArgumentError.new "Aspect must have a codeblock" unless block_given?
+      fail NoMethodError.new "Aspect must be attached to existing method" unless instance_methods.include? meth.to_sym
 
-      plugins(meth)[after ? :after : :before] << Proc.new
+      aspects(meth)[after ? :after : :before] << Proc.new
 
-      unless instance_methods(true).include?(:"#{PLUGIN_PREFIX}#{meth}")
+      unless instance_methods(true).include?(:"#{ASPECT_PREFIX}#{meth}")
         class_eval <<-CODE
-          alias_method :#{PLUGIN_PREFIX}#{meth}, :#{meth}
+          alias_method :#{ASPECT_PREFIX}#{meth}, :#{meth}
           def #{meth}(*args, &cb)
-            ps = self.class.send :plugins, :#{meth}
+            ps = self.class.send :aspects, :#{meth}
             ps[:before].each do |p|
               p.call(*args) # TODO: make prependers able to change args!!!
             end
-            send(:#{PLUGIN_PREFIX}#{meth}, *args, &cb).tap do |result|
+            send(:#{ASPECT_PREFIX}#{meth}, *args, &cb).tap do |result|
               ps[:after].each do |p|
                 p.call result, *args
               end
@@ -145,11 +145,11 @@ module Kungfuig
     end
     # rubocop:enable Metrics/MethodLength
 
-    def plugins meth = nil
-      @plugins ||= {}
-      meth ? @plugins[meth.to_sym] ||= {after: [], before: []} : @plugins
+    def aspects meth = nil
+      @aspects ||= {}
+      meth ? @aspects[meth.to_sym] ||= {after: [], before: []} : @aspects
     end
-    private :plugins
+    private :aspects
     alias_method :set, :option!
   end
 end

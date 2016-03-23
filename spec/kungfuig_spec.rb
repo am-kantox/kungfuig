@@ -7,13 +7,13 @@ describe Kungfuig do
     expect(Kungfuig::VERSION).not_to be nil
   end
 
-  it 'attaches plugins properly' do
-    before_plugin_1 = ->(*args) { puts "Before1 | Args: #{args.inspect}" }
-    after_plugin_1 = ->(result, *args) { puts "Plugin1 | Result: #{result}, Args: #{args.inspect}" }
-    after_plugin_2 = ->(result, *args) { puts "Plugin2 | Result: #{result}, Args: #{args.inspect}" }
-    expect(test.class.plugin(:yo, false, &before_plugin_1)).to eq :yo
-    expect(test.class.plugin(:yo, true, &after_plugin_1)).to eq :yo
-    expect(test.class.plugin(:yo, true, &after_plugin_2)).to eq :yo
+  it 'attaches aspects properly' do
+    before_aspect_1 = ->(*args) { puts "Before1 | Args: #{args.inspect}" }
+    after_aspect_1 = ->(result, *args) { puts "Aspect1 | Result: #{result}, Args: #{args.inspect}" }
+    after_aspect_2 = ->(result, *args) { puts "Aspect2 | Result: #{result}, Args: #{args.inspect}" }
+    expect(test.class.aspect(:yo, false, &before_aspect_1)).to eq :yo
+    expect(test.class.aspect(:yo, true, &after_aspect_1)).to eq :yo
+    expect(test.class.aspect(:yo, true, &after_aspect_2)).to eq :yo
 
     expect(test.yo(42)).to eq [42, [], {}, nil]
     expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
