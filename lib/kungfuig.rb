@@ -117,33 +117,36 @@ module Kungfuig
       instance_eval(&block)
     end
 
+    # rubocop:disable Metrics/MethodLength
     def plugin meth, after = true
       fail ArgumentError.new "Plugin must have a codeblock" unless block_given?
       fail NoMethodError.new "Plugin must be attached to existing method" unless instance_methods.include? meth.to_sym
 
-      ps = plugins(meth)
-      ps[after ? :after : :before] << Proc.new
+      plugins(meth)[after ? :after : :before] << Proc.new
 
-      class_eval do
-        # make it always return method name as symbol
-        return :"#{meth}" if instance_methods(true).include?(:"#{PLUGIN_PREFIX}#{meth}")
-
-        alias_method :"#{PLUGIN_PREFIX}#{meth}", meth.to_sym
-        define_method meth.to_sym do |*args, &cb|
-          ps[:before].each do |p|
-            p.call(*args) # TODO: make prependers able to change args!!!
-          end
-          send(:"#{PLUGIN_PREFIX}#{meth}", *args, &cb).tap do |result|
-            ps[:after].each do |p|
-              p.call result, *args
+      unless instance_methods(true).include?(:"#{PLUGIN_PREFIX}#{meth}")
+        class_eval <<-CODE
+          alias_method :#{PLUGIN_PREFIX}#{meth}, :#{meth}
+          def #{meth}(*args, &cb)
+            ps = self.class.send :plugins, :#{meth}
+            ps[:before].each do |p|
+              p.call(*args) # TODO: make prependers able to change args!!!
+            end
+            send(:#{PLUGIN_PREFIX}#{meth}, *args, &cb).tap do |result|
+              ps[:after].each do |p|
+                p.call result, *args
+              end
             end
           end
-        end
+        CODE
       end
+
+      meth.to_sym
     end
+    # rubocop:enable Metrics/MethodLength
 
     def plugins meth = nil
-      @plugins ||= Hashie::Mash.new
+      @plugins ||= {}
       meth ? @plugins[meth.to_sym] ||= {after: [], before: []} : @plugins
     end
     private :plugins
