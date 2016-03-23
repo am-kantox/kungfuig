@@ -128,7 +128,7 @@ module Kungfuig
         class_eval <<-CODE
           alias_method :#{ASPECT_PREFIX}#{meth}, :#{meth}
           def #{meth}(*args, &cb)
-            ps = self.class.send :aspects, :#{meth}
+            ps = self.class.aspects(:#{meth})
             ps[:before].each do |p|
               p.call(*args) # TODO: make prependers able to change args!!!
             end
@@ -149,7 +149,6 @@ module Kungfuig
       @aspects ||= {}
       meth ? @aspects[meth.to_sym] ||= {after: [], before: []} : @aspects
     end
-    private :aspects
     alias_method :set, :option!
   end
 end
