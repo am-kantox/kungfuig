@@ -3,6 +3,7 @@ require 'yaml'
 require 'hashie'
 
 module Kungfuig
+  PLUGIN_PREFIX = '♻_'.freeze
   MX = Mutex.new
 
   module InstanceMethods
@@ -63,27 +64,34 @@ module Kungfuig
       !option(*keys).nil?
     end
 
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength
     # @param hos [Hash|String] the new values taken from hash,
     #   mash or string (when string, should be either valid YAML file name or
     #   string with valid YAML)
     def merge_hash_or_string! hos
       options.deep_merge! case hos
-                          when NilClass then {} # aka skip
-                          when Hash then hos
+                          when NilClass then Hashie::Mash.new # aka skip
+                          when Hash then Hashie::Mash.new(hos)
                           when String
                             begin
                               File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos)).tap do |opts|
                                 fail ArgumentError.new "#{__callee__} expects valid YAML configuration file or YAML string." unless opts.is_a?(Hash)
                               end
-                            rescue ArgumentError => ae
+                            rescue ArgumentError
                               fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
-                            rescue Psych::SyntaxError => pse
+                            rescue Psych::SyntaxError
                               fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
                             end
+                          when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
                           else
                             fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
                           end
     end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/AbcSize
     private :merge_hash_or_string!
   end
 
@@ -109,26 +117,36 @@ module Kungfuig
       instance_eval(&block)
     end
 
-    def plugin meth
+    def plugin meth, after = true
       fail ArgumentError.new "Plugin must have a codeblock" unless block_given?
       fail NoMethodError.new "Plugin must be attached to existing method" unless instance_methods.include? meth.to_sym
 
-      ((@plugins ||= {})[meth.to_sym] ||= []) << Proc.new
-      plugins = @plugins
+      ps = plugins(meth)
+      ps[after ? :after : :before] << Proc.new
+
       class_eval do
-        unless instance_methods(true).include?(:"∃#{meth}")
-          alias_method :"∃#{meth}", meth.to_sym
-          define_method meth.to_sym do |*args|
-            send(:"∃#{meth}", *args).tap do |result|
-              plugins[meth.to_sym].each do |p|
-                p.call result
-              end
+        # make it always return method name as symbol
+        return :"#{meth}" if instance_methods(true).include?(:"#{PLUGIN_PREFIX}#{meth}")
+
+        alias_method :"#{PLUGIN_PREFIX}#{meth}", meth.to_sym
+        define_method meth.to_sym do |*args, &cb|
+          ps[:before].each do |p|
+            p.call(*args) # TODO: make prependers able to change args!!!
+          end
+          send(:"#{PLUGIN_PREFIX}#{meth}", *args, &cb).tap do |result|
+            ps[:after].each do |p|
+              p.call result, *args
             end
           end
         end
-
       end
     end
+
+    def plugins meth = nil
+      @plugins ||= Hashie::Mash.new
+      meth ? @plugins[meth.to_sym] ||= {after: [], before: []} : @plugins
+    end
+    private :plugins
     alias_method :set, :option!
   end
 end

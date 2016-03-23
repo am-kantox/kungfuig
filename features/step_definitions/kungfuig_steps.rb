@@ -3,8 +3,9 @@ Given(/^I include a Kungfuig module into class$/) do
   Test = Class.new do
     include Kungfuig
 
-    def yo param, *others
-      [param, *others]
+    def yo(param, *rest, **splat)
+      block_result = yield if block_given?
+      [param, rest, splat, block_result]
     end
   end
   @test = Test
@@ -49,9 +50,15 @@ end
 When(/^I specify a plugin to be attached to "(.*?)" method$/) do |meth|
   expect(
     @test.kungfuig do
-      plugin meth.to_sym do |*args|
-        puts "Hi! I am called with parameters: #{args}!"
+      plugin(meth.to_sym) do |*args|
+        puts "Hi! I am KUNGFUIG::PLUGIN called with parameters: #{args}!"
       end
+    end
+  ).to eq(meth.to_sym)
+
+  expect(
+    @test.plugin(meth.to_sym) do |*args|
+      puts "Hi! I am PLUGIN called with parameters: #{args}!"
     end
   ).to eq(meth.to_sym)
 end
@@ -76,7 +83,9 @@ Then(/^I get new option "(.*?)" with value "(.*?)"$/) do |key, value|
 end
 
 Then(/^the plugin is called on "(.*?)" method execution$/) do |meth|
-  @test.new.yo 'Parameter'
+  expect(
+    @test.new.yo('Parameter', 42, a: 1, b: 2, **{c: 3, d: 4}) { 'block-value' }
+  ).to eq(["Parameter", [42], {a: 1, b: 2, c: 3, d: 4}, "block-value"])
 end
 
 Then(/^the value from a default branch is retrieven$/) do
