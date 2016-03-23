@@ -124,11 +124,11 @@ module Kungfuig
 
       aspects(meth)[after ? :after : :before] << Proc.new
 
-      unless instance_methods(true).include?(:"#{ASPECT_PREFIX}#{meth}")
+      unless instance_methods.include?(:"#{ASPECT_PREFIX}#{meth}")
         class_eval <<-CODE
           alias_method :#{ASPECT_PREFIX}#{meth}, :#{meth}
           def #{meth}(*args, &cb)
-            ps = self.class.aspects(:#{meth})
+            ps = self.class.aspects(:#{meth}).merge((class << self; self; end).aspects(:#{meth})) { |_, c, ec| c | ec }
             ps[:before].each do |p|
               p.call(*args) # TODO: make prependers able to change args!!!
             end

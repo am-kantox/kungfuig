@@ -11,14 +11,16 @@ module Kungfuig
           case
           when v.empty? then []
           when v.include?(:'*') then klazz.instance_methods(false)
-          else klazz.instance_methods(false) & v
+          else klazz.instance_methods & v
           end
         end.reduce(&:-)
       end
     end
 
-    def attach(klazz, before: nil, after: nil, exclude: nil)
+    def attach(to, before: nil, after: nil, exclude: nil)
       raise ArgumentError, "Trying to attach nothing to #{klazz}. I need a block!" unless block_given?
+
+      klazz = to.is_a?(Class) ? to : class << to; self; end # attach to klazz’s eigenclass if object given
 
       klazz.send(:include, Kungfuig::Aspector) unless klazz.ancestors.include? Kungfuig::Aspector
       cb = Proc.new
