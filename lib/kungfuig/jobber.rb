@@ -10,6 +10,22 @@ end
 
 module Kungfuig
   # Generic helper for massive attaching aspects
-  module Jobber
+  class Jobber
+    class << self
+      # 'Test':
+      #   '*': 'YoJob'
+      def bulk(hos)
+        @hash = Kungfuig.load_stuff hos
+        Kungfuig::Aspector.bulk(
+          @hash.map do |klazz, hash|
+            [klazz, { after: hash.map { |k, _| [k, 'Kungfuig::Jobber#bottleneck'] }.to_h }]
+          end.to_h
+        )
+      end
+
+      def bottleneck(klazz, method, result, *args)
+        puts "Bottleneck called for: #{@hash[klazz.class.name][method]} :: #{result} :: #{args}}}"
+      end
+    end
   end
 end

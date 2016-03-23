@@ -8,7 +8,7 @@ module Kungfuig
           v = [*v].map(&:to_sym)
           case
           when v.empty? then []
-          when v.include?(:'*') then klazz.instance_methods(false)
+          when v.include?('*'), v.include?(:'*') then klazz.instance_methods(false)
           else klazz.instance_methods & v
           end
         end.reduce(&:-)
@@ -41,10 +41,12 @@ module Kungfuig
       cb = Proc.new
 
       H.new.value_to_method_list(klazz, before, exclude).each do |m|
+        # FIXME: log methods that failed to be wrapped more accurately? # Kungfuig.✍(klazz, m, e.inspect)
         klazz.aspect(m, false, &cb)
       end unless before.nil?
 
       H.new.value_to_method_list(klazz, after, exclude).each do |m|
+        # FIXME: log methods that failed to be wrapped more accurately? # Kungfuig.✍(klazz, m, e.inspect)
         klazz.aspect(m, true, &cb)
       end unless after.nil?
 
@@ -65,7 +67,12 @@ module Kungfuig
           begin
             attach(klazz, **methods, &H.new.proc_instance(handler))
           rescue => e
-            raise ArgumentError, "Bad input to Kungfuig::Aspector##{__callee__}. Original exception: “#{e.message}”."
+            raise ArgumentError, [
+              "Bad input to Kungfuig::Aspector##{__callee__}.",
+              "Args: #{methods.inspect}",
+              "Original exception: “#{e.message}”.",
+              e.backtrace.unshift("Backtrace:").join("#{$/}⮩  ")
+            ].join($/.to_s)
           end
         end
       end

@@ -144,15 +144,15 @@ module Kungfuig
 
       unless instance_methods.include?(:"#{ASPECT_PREFIX}#{meth}")
         class_eval <<-CODE
-          alias_method :#{ASPECT_PREFIX}#{meth}, :#{meth}
+          alias_method :'#{ASPECT_PREFIX}#{meth}', :'#{meth}'
           def #{meth}(*args, &cb)
-            ps = self.class.aspects(:#{meth}).merge((class << self; self; end).aspects(:#{meth})) { |_, c, ec| c | ec }
+            ps = self.class.aspects(:'#{meth}').merge((class << self; self; end).aspects(:'#{meth}')) { |_, c, ec| c | ec }
             ps[:before].each do |p|
-              p.call(self, :#{meth}, nil, *args) # FIXME: allow argument modification!!!
+              p.call(self, :'#{meth}', nil, *args) # FIXME: allow argument modification!!!
             end
-            send(:#{ASPECT_PREFIX}#{meth}, *args, &cb).tap do |result|
+            send(:'#{ASPECT_PREFIX}#{meth}', *args, &cb).tap do |result|
               ps[:after].each do |p|
-                p.call self, :#{meth}, result, *args
+                p.call(self, :'#{meth}', result, *args)
               end
             end
           end

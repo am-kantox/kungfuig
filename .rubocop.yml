@@ -13,3 +13,8 @@ Style/AsciiComments:
 Style/RaiseArgs:
   Exclude:
     - 'lib/**/*'
+
+Style/SpecialGlobalVars:
+  Exclude:
+    - 'lib/**/*'
+    - 'spec/**/*'
