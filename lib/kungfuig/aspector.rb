@@ -63,7 +63,7 @@ module Kungfuig
     def bulk(hos)
       Kungfuig.load_stuff(hos).map do |klazz, hash|
         next if hash.empty?
-        H.new.remap_hash_for_easy_iteration(hash).each do |handler, methods|
+        [klazz, H.new.remap_hash_for_easy_iteration(hash).map do |handler, methods|
           begin
             attach(klazz, **methods, &H.new.proc_instance(handler))
           rescue => e
@@ -74,8 +74,8 @@ module Kungfuig
               e.backtrace.unshift("Backtrace:").join("#{$/}⮩  ")
             ].join($/.to_s)
           end
-        end
-      end
+        end]
+      end.compact.to_h
     end
     module_function :bulk
 
