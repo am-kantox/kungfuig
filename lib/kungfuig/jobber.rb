@@ -23,8 +23,11 @@ module Kungfuig
         )
       end
 
-      def bottleneck(klazz, method, result, *args)
-        puts "Bottleneck called for: #{@hash[klazz.class.name][method]} :: #{result} :: #{args}}}"
+      def bottleneck(receiver, method, result, *args)
+        Kernel.const_get(@hash[receiver.class.name][method])
+              .perform_async(receiver, method, result, *args)
+      rescue => e
+        Kungfuig.✍("Fail [#{e.message}] while #{receiver}", method, result, *args)
       end
     end
   end

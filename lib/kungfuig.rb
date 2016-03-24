@@ -13,7 +13,8 @@ module Kungfuig
   def ✍(receiver, method, result, *args)
     require 'logger'
     @✍ ||= Kernel.const_defined?('Rails') && Rails.logger || Logger.new($stdout)
-    "[#{receiver.class}##{method}] called with [#{args.inspect}] and returned [#{result || 'nothing (was it before aspect?)'}]".tap do |m|
+    message = receiver.is_a?(String) ? "#{receiver} | #{method}" : "#{receiver.class}##{method}"
+    "#{message} called with «#{args.inspect}» and returned «#{result || 'nothing (was it before aspect?)'}»".tap do |m|
       @✍.debug m
     end
   end
