@@ -24,8 +24,15 @@ module Kungfuig
       end
 
       def bottleneck(receiver, method, result, *args)
+        respond_to = ->(m, r) { r.respond_to? m.to_sym }
+        r = case receiver
+            when respond_to.curry[:to_hash] then receiver.to_hash
+            when respond_to.curry[:to_h] then receiver.to_h
+            else receiver
+            end
+
         Kernel.const_get(@hash[receiver.class.name][method])
-              .perform_async(receiver, method, result, *args)
+              .perform_async(r, method, result, *args)
       rescue => e
         Kungfuig.✍("Fail [#{e.message}] while #{receiver}", method, result, *args)
       end

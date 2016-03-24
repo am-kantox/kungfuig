@@ -6,8 +6,7 @@ class TestWorker
   include Sidekiq::Worker
 
   def perform(receiver, method, result, *args)
-    puts receiver.class.name << ' | ' << method.to_s
-    Kungfuig.✍(receiver, method, result, *args) unless receiver.is_a?(Test) && method.to_s == 'yo'
+    Kungfuig.✍("Unexpectedly got #{receiver.inspect} while", method, result, *args) unless receiver.is_a?(Test) && method.to_s == 'yo'
   end
 end
 
@@ -23,7 +22,7 @@ describe Kungfuig::Jobber do
   it 'accepts YAML for bulk jobber' do
     yaml = <<YAML
 'Test':
-  'yo': 'TestWorker'
+  'yo': 'TestWorkerHARM'
 YAML
     expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
     expect(Kungfuig::Jobber.bulk(yaml)).to be_truthy

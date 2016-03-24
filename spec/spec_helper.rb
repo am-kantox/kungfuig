@@ -11,7 +11,16 @@ RSpec.configure do |config|
 
       def yo(param, *rest, **splat)
         block_result = yield if block_given?
-        [param, rest, splat, block_result]
+        [@param = param, @rest = rest, @splat = splat, @result = block_result]
+      end
+
+      def to_hash
+        {
+          param: @param,
+          rest: @rest,
+          splat: @splat,
+          result: @result
+        }
       end
     end
   end
