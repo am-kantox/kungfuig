@@ -1,7 +1,7 @@
 module Kungfuig
+  # rubocop:disable Metrics/ClassLength
   # Dealing with colors
   class Color
-
     # Copyright (c) 2007 McClain Looney
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -76,6 +76,8 @@ module Kungfuig
       end
     end
 
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength
     # Attempt to read in a string and parse it into values
     def self.parse(*args)
       case args.size
@@ -98,6 +100,8 @@ module Kungfuig
       when 3, 4 then Color.new(*args)
       end
     end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     def inspect
       id = format('%x', object_id << 1)
@@ -108,6 +112,9 @@ module Kungfuig
       trans? ? to_rgba(add_hash) : to_rgb(add_hash)
     end
 
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/ParameterLists
     # Color as used in 256-color terminal escape sequences
     def to_esc(surround = true, bold: true, italic: false, underline: false, reverse: false, foreground: true)
       result = if grayscale?
@@ -128,6 +135,9 @@ module Kungfuig
 
       surround ? "\e[#{esc}m" : esc
     end
+    # rubocop:enable Metrics/ParameterLists
+    # rubocop:enable Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     def to_rgb(add_hash = true)
       (add_hash ? '#' : '') + to_hex(r) + to_hex(g) + to_hex(b)
@@ -193,6 +203,7 @@ module Kungfuig
       set(grayscale)
     end
 
+    # rubocop:disable Metrics/AbcSize
     # Blend to a color amt % towards another color value, eg
     # red.blend(blue, 0.5) will be purple, white.blend(black, 0.5) will be gray, etc.
     def blend(other, amt)
@@ -205,6 +216,7 @@ module Kungfuig
         val.b += ((other.b - val.b) * amt).to_i
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     # In place version of #blend
     def blend!(other, amt)
@@ -218,6 +230,7 @@ module Kungfuig
       col1.blend(col2, amt)
     end
 
+    # rubocop:disable Metrics/ParameterLists
     def self.to_xterm256(text, color, bold: true, italic: false, underline: false, reverse: false, foreground: true)
       color = Color.preset(color) unless color.is_a?(Color)
       [
@@ -226,7 +239,9 @@ module Kungfuig
         "\e[0m"
       ].join
     end
+    # rubocop:enable Metrics/ParameterLists
 
+    # rubocop:disable Metrics/CyclomaticComplexity
     def self.preset type
       Color.parse case type
                   when :label then '#999999'
@@ -240,6 +255,7 @@ module Kungfuig
                   else type
                   end
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     protected
 
@@ -252,7 +268,7 @@ module Kungfuig
     def from_hex(val)
       if val.is_a?(String)
         # Double up if single char form
-        val = val + val if val.size == 1
+        val *= 2 if val.size == 1
         # Convert to integer
         val = val.hex
       end
@@ -262,10 +278,9 @@ module Kungfuig
       val
     end
 
-    public
-
     # Some constants for general use
     WHITE = Color.new(255, 255, 255).freeze
     BLACK = Color.new(0, 0, 0).freeze
   end
+  # rubocop:enable Metrics/ClassLength
 end
