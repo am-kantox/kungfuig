@@ -2,6 +2,7 @@ require 'yaml'
 require 'hashie'
 
 require 'kungfuig/version'
+require 'kungfuig/color'
 require 'kungfuig/aspector'
 
 module Kungfuig
@@ -14,7 +15,7 @@ module Kungfuig
     require 'logger'
     @✍ ||= Kernel.const_defined?('Rails') && Rails.logger || Logger.new($stdout)
     message = receiver.is_a?(String) ? "#{receiver} | #{method}" : "#{receiver.class}##{method}"
-    "#{message} called with «#{args.inspect}» and returned «#{result || 'nothing (was it before aspect?)'}»".tap do |m|
+    "#{Color.to_xterm256(message, :info)} called with «#{Color.to_xterm256(args.inspect, :success)}» and returned «#{result || 'nothing (was it before aspect?)'}»".tap do |m|
       @✍.debug m
     end
   end
