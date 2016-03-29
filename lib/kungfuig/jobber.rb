@@ -31,8 +31,11 @@ module Kungfuig
             when respond_to.curry[:to_h] then receiver.to_h
             else receiver
             end
-        Kernel.const_get(@hash[receiver.class.name][method])
-              .perform_async(r, method, result, *args)
+        receiver_class = receiver.class.ancestors.detect do |c|
+          @hash[c.name] && @hash[c.name][method]
+        end
+        Kernel.const_get(@hash[receiver_class.name][method])
+              .perform_async(r, method, result, *args) if receiver_class
       rescue => e
         Kungfuig.✍("Fail [#{e.message}] while #{receiver}", method, result, *args)
       end
