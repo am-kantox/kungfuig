@@ -14,20 +14,20 @@ class MyApp
 end
 
 # Load configuration file
-MyApp.config('config/myapp.yml')
+MyApp.kungfuig('config/myapp.yml')
 
 # Append options explicitly
-MyApp.config do |options|
+MyApp.kungfuig do |options|
   options.value = 42
 end
 
 # load options from JSON file and execute block on it
-MyApp.config('config/myapp.json') do |options|
+MyApp.kungfuig('config/myapp.json') do |options|
   options.other_value = options[:value]
 end
 
 # DSL (note `kungfuig` method name)
-MyApp.kungfuig do
+MyApp.kungfuigure do
   set :value, 42
 end
 ```
@@ -43,7 +43,7 @@ class MyApp
   end
 end
 
-MyApp.kungfuig do
+MyApp.kungfuigure do
   aspect :report do |result|
     puts "MyApp#report returned #{result}"
   end

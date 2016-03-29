@@ -52,7 +52,7 @@ module Kungfuig
     # Configures everything by hash or yaml from string or file. Whether code block
     #   is passed, it is processed with @options instance.
     # @param hos [String|Hash|Hashie::Mash] the input data to merge into options
-    def config hos = nil
+    def kungfuig hos = nil
       MX.synchronize {
         merge_hash_or_string! hos
         yield options if block_given?
@@ -133,7 +133,7 @@ module Kungfuig
 
     # A wrapper for the configuration block
     # @param block the block to be executed in the context of this module
-    def kungfuig &block
+    def kungfuigure &block
       instance_eval(&block)
     end
 

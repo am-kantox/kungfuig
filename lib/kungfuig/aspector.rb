@@ -29,15 +29,22 @@ module Kungfuig
       end
     end
 
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength
     def attach(to, before: nil, after: nil, exclude: nil)
-      klazz = case to
-              when String then Kernel.const_get(to) # we are ready to get a class name
-              when Class then to                    # got a class! wow, somebody has the documentation read
-              else class << to; self; end           # attach to klazz’s eigenclass if object given
+      klazz = begin
+                case to
+                when Class then to                    # got a class! wow, somebody has the documentation read
+                when String then Kernel.const_get(to) # we are ready to get a class name
+                when Symbol then Kernel.const_get(to.to_s)
+                else class << to; self; end           # attach to klazz’s eigenclass if object given
+                end
+              rescue => e
+                raise ArgumentError, "Unable to attach to #{to}. I need a valid class/method name!\nOriginal exception: #{e.message}"
               end
 
       raise ArgumentError, "Trying to attach nothing to #{klazz}##{to}. I need a block!" unless block_given?
-      klazz.send(:include, Kungfuig::Aspector) unless klazz.ancestors.include? Kungfuig::Aspector
+      klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
       cb = Proc.new
 
       H.new.value_to_method_list(klazz, before, exclude).each do |m|
@@ -53,6 +60,8 @@ module Kungfuig
       klazz.aspects
     end
     module_function :attach
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     # 'Test':
     #   after:
@@ -70,7 +79,7 @@ module Kungfuig
             raise ArgumentError, [
               "Bad input to Kungfuig::Aspector##{__callee__}.",
               "Args: #{methods.inspect}",
-              "Original exception: “#{e.message}”.",
+              "Original exception: #{e.message}.",
               e.backtrace.unshift("Backtrace:").join("#{$/}⮩  ")
             ].join($/.to_s)
           end

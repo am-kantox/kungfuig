@@ -22,23 +22,23 @@ end
 ################################################################################
 
 When(/^I pass new option "(.*?)" with value "(.*?)" via block$/) do |key, value|
-  @test.config do |c|
+  @test.kungfuig do |c|
     c[key] = value
   end
 end
 
 When(/^I pass new option "(.*?)" with value "(.*?)" via block’s DSL$/) do |key, value|
-  @test.kungfuig do
+  @test.kungfuigure do
     set key, value
   end
 end
 
 When(/^I pass new option "(.*?)" with value "(.*?)" via hash$/) do |key, value|
-  @test.config({key => value})
+  @test.kungfuig({key => value})
 end
 
 When(/^I pass new file "(.*?)" to config$/) do |f|
-  @test.config f
+  @test.kungfuig f
 end
 
 When(/^I try to configure with DSL I yield an exception raised$/) do
@@ -49,7 +49,7 @@ end
 
 When(/^I specify an aspect to be attached to "(.*?)" method$/) do |meth|
   expect(
-    @test.kungfuig do
+    @test.kungfuigure do
       aspect(meth.to_sym) do |*args|
         puts "Hi! I am KUNGFUIG::ASPECT called with parameters: #{args}!"
       end
@@ -78,7 +78,7 @@ end
 ################################################################################
 
 Then(/^I get new option "(.*?)" with value "(.*?)"$/) do |key, value|
-  c = @test.config
+  c = @test.kungfuig
   expect(c[key]).to eq(value)
 end
 
