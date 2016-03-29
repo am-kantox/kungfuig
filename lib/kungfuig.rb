@@ -7,6 +7,8 @@ require 'kungfuig/aspector'
 
 module Kungfuig
   ASPECT_PREFIX = '♻_'.freeze
+  ASPECT_TEMPLATE = -> { %i(after before).map { |k| [k, []] }.to_h }
+
   MX = Mutex.new
 
   # rubocop:disable Style/VariableName
@@ -113,6 +115,22 @@ module Kungfuig
       options.deep_merge! Kungfuig.load_stuff hos
     end
     private :merge_hash_or_string!
+
+    def lookup_aspects meth
+      meth = meth.to_sym
+      eigenclass = class << self; self; end
+      return eigenclass.aspects(meth) if eigenclass.respond_to?(:aspects?) && eigenclass.aspects?
+      aspected = self.class.ancestors.detect do |c|
+        c.respond_to?(:aspects?) && c.aspects?
+      end
+
+      aspected ? aspected.aspects(meth) : Kungfuig::ASPECT_TEMPLATE.call
+
+      # self.class.ancestors.inject(initial) do |memo, c|
+      #   c.respond_to?(:aspects?) && c.aspects? ? c.aspects(meth).merge(memo) { |_, c1, c2| c1 | c2 } : memo
+      # end
+    end
+    private :lookup_aspects
   end
 
   def self.included base
@@ -148,7 +166,7 @@ module Kungfuig
         class_eval <<-CODE
           alias_method :'#{ASPECT_PREFIX}#{meth}', :'#{meth}'
           def #{meth}(*args, &cb)
-            ps = self.class.aspects(:'#{meth}').merge((class << self; self; end).aspects(:'#{meth}')) { |_, c, ec| c | ec }
+            ps = lookup_aspects(:'#{meth}')
             ps[:before].each do |p|
               p.call(self, :'#{meth}', nil, *args) # FIXME: allow argument modification!!!
             end
@@ -165,9 +183,13 @@ module Kungfuig
     end
     # rubocop:enable Metrics/MethodLength
 
+    def aspects?
+      @aspects.is_a?(Hash)
+    end
+
     def aspects meth = nil
       @aspects ||= {}
-      meth ? @aspects[meth.to_sym] ||= {after: [], before: []} : @aspects
+      meth ? @aspects[meth.to_sym] ||= Kungfuig::ASPECT_TEMPLATE.call : @aspects
     end
     alias_method :set, :option!
   end

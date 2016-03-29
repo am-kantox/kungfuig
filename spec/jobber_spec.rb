@@ -6,13 +6,7 @@ class TestWorker
   include Sidekiq::Worker
 
   def perform(receiver, method, result, *args)
-    Kungfuig.✍("Unexpectedly got #{receiver.inspect} while", method, result, *args) unless receiver.is_a?(Test) && method.to_s == 'yo'
-  end
-end
-
-RSpec.configure do |config|
-  config.before(:each) do
-    Sidekiq::Worker.clear_all
+    Kungfuig.✍("TestWorker :: got #{receiver.inspect} while", method, result, *args) unless receiver.is_a?(Test) && method.to_s == 'yo'
   end
 end
 

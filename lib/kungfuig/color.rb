@@ -88,7 +88,7 @@ module Kungfuig
         when Fixnum then Color.new(val, val, val) # Single value, assume grayscale
         when String
           str = val.to_s.upcase[/[0-9A-F]{3,8}/] || ''
-          Color.new(*case str.size
+          Color.new(*case str.length
                      when 3, 4 then str.scan(/[0-9A-F]/)
                      when 6, 8 then str.scan(/[0-9A-F]{2}/)
                      else 'FF'

@@ -11,7 +11,7 @@ module Kungfuig
           when v.include?('*'), v.include?(:'*') then klazz.instance_methods(false)
           else klazz.instance_methods & v
           end
-        end.reduce(&:-)
+        end.reduce(&:-) - klazz.instance_methods(false).select { |m| m.to_s.start_with?('to_') }
       end
 
       def remap_hash_for_easy_iteration hash
