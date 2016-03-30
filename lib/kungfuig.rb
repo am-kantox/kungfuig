@@ -117,18 +117,10 @@ module Kungfuig
     private :merge_hash_or_string!
 
     def lookup_aspects meth
-      meth = meth.to_sym
-      eigenclass = class << self; self; end
-      return eigenclass.aspects(meth) if eigenclass.respond_to?(:aspects?) && eigenclass.aspects?
-      aspected = self.class.ancestors.detect do |c|
-        c.respond_to?(:aspects?) && c.aspects?
+      # ⇓⇓⇓ eigenclass              ⇓⇓⇓ ancestors
+      [(class << self; self; end), *self.class.ancestors].inject(ASPECT_TEMPLATE.call) do |memo, c|
+        c.respond_to?(:aspects?) && c.aspects? ? c.aspects(meth.to_sym).merge(memo) { |_, c1, c2| c1 | c2 } : memo
       end
-
-      aspected ? aspected.aspects(meth) : Kungfuig::ASPECT_TEMPLATE.call
-
-      # self.class.ancestors.inject(initial) do |memo, c|
-      #   c.respond_to?(:aspects?) && c.aspects? ? c.aspects(meth).merge(memo) { |_, c1, c2| c1 | c2 } : memo
-      # end
     end
     private :lookup_aspects
   end
