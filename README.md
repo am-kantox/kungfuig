@@ -53,6 +53,67 @@ MyApp.new.report
 #⇒ "MyApp#report returned 42"
 ```
 
+### Bulk aspects assignment
+
+```ruby
+it 'accepts YAML for bulk attach' do
+    yaml = <<YAML
+'Test':
+  after:
+    '*': 'MyLogger#debug_after_method_call'
+  before:
+    'shutdown': 'MyLogger#info_before_shutdown_call'
+YAML
+expect(Kungfuig::Aspector.bulk(yaml)).to be_truthy
+expect(test.yo(42)).to eq ['Answer given']
+```
+
+in the example above, `MyLogger#debug_after_method_call` will be called
+after _all_ methods of `Test` class, and `MyLogger#info_before_shutdown_call`—before
+`Test#shutdown`.
+
+### Bulk jobs assignment
+
+```ruby
+Kungfuig::Jobber.bulk("#{Rails.root}/config/my_app.yml")
+```
+
+**config/my_app.yml**
+
+```yaml
+'SessionsController':
+  'login': 'OnLoginJob'
+'UsersController':
+  'show': 'OnUsersShownJob'
+```
+
+in the example above, `OnLoginJob` will be executed after `SessionsController#login`
+method is called, and `OnUsersShownJob`—after `UsersController#show`.
+
+### Jobs `perform` format
+
+The job’s `perform` method will be called with four parameters:
+
+```ruby
+job.perform_async(receiver, method, result, *args)
+```
+
+* `receiver` — the actual method receiver, serialized to the hash (see below);
+* `method` — the actual method name;
+* `result` — the result of call to the method (`nil` for before filters);
+* `args` — arguments, passed to the method; objects will be lost (cast to `String`
+  instance as by `Sidekiq` convention.)
+
+```ruby
+r = case receiver
+    when Hash, Array, String then receiver
+    when respond_to.curry[:to_hash] then receiver.to_hash
+    when respond_to.curry[:to_h] then receiver.to_h
+    else receiver
+    end
+job.perform_async(r, method, result, *args)
+```
+
 ## Installation
 
 Add this line to your application's Gemfile:
