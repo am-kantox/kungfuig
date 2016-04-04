@@ -16,14 +16,25 @@ describe Kungfuig::Jobber do
   it 'accepts YAML for bulk jobber' do
     yaml = <<YAML
 'Test':
-  'yo': 'TestWorkerHARM'
+  'yo': 'TestWorker'
 YAML
-    expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
-    expect(Kungfuig::Jobber.bulk(yaml)).to be_truthy
+    bulk = Kungfuig::Jobber.bulk(yaml)
+    expect(bulk).to be_truthy
+    expect(bulk.inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
 
     expect(test.yo(42)).to eq [42, [], {}, nil]
     expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
     expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+  end
+
+  it 'logs an error but does not fail on wrong aspects in YAML for bulk jobber' do
+    yaml = <<YAML
+'Test':
+  'yo': 'TestWorkerHARM'
+YAML
+    expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
+
+    expect(test.yo(42)).to eq [42, [], {}, nil] # prints a backtrace
   end
 
   it 'schedules sidekiq jobs on execution' do
