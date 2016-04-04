@@ -4,7 +4,25 @@
 
 [![Build Status](https://travis-ci.org/am-kantox/kungfuig.svg\?branch\=master)](https://travis-ci.org/am-kantox/kungfuig)
 
-Configuration is thread-safe (starting with `0.2.0`).
+## Config on steroids
+
+This gem allows to (including but not limited to):
+
+* easily attach a configuration to any class and/or instance;
+* attach basic [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming)
+  to any existing method on `before` and `after` pointcuts;
+* bulk attach aspects as defined by `yaml` configuration file
+  (see [Bulk aspects assignment](#bulk-aspects-assignment).)
+* bulk attach sidekiq jobs as aspects as defined by `yaml` configuration file
+  (see [Bulk jobs assignment](#bulk-jobs-assignment).)
+* thread-safe configure nested / derived classes / instances.
+
+## Eastern eggs:
+
+* easy way to handle console colors:
+  * `Color.to_xterm256('Hello, world!', :info)`
+  * `Color.to_xterm256('Hello, world!', :success)`
+  * `Color.to_xterm256('Hello, world!', '#FFFF00')`
 
 ## Usage
 
@@ -44,7 +62,7 @@ class MyApp
 end
 
 MyApp.kungfuigure do
-  aspect :report do |result|
+  aspect :report do |result|  # or just MyApp.aspect :report do |result|
     puts "MyApp#report returned #{result}"
   end
 end
@@ -105,6 +123,7 @@ job.perform_async(receiver, method, result, *args)
   instance as by `Sidekiq` convention.)
 
 ```ruby
+respond_to = ->(m, r) { r.respond_to? m.to_sym }
 r = case receiver
     when Hash, Array, String then receiver
     when respond_to.curry[:to_hash] then receiver.to_hash
