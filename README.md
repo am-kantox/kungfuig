@@ -1,4 +1,4 @@
-# [![夫](https://en.wiktionary.org/wiki/%E5%A4%AB)](kungfuig.png) Kungfuig
+# [![夫](kungfuig.png)](https://en.wiktionary.org/wiki/%E5%A4%AB) Kungfuig
 
 **Kungfuig** (_pronounced: [ˌkʌŋˈfig]_) provides a drastically easy way to plug configuration into everything.
 
