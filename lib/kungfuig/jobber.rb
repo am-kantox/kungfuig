@@ -46,7 +46,11 @@ module Kungfuig
           job.perform_async(r, method, result, *args)
         end
       rescue => e
-        Kungfuig.✍("Fail [#{e.message}] while #{receiver}", method, result, *args)
+        Kungfuig.✍([
+          "Fail [#{e.message}]",
+          *e.backtrace.unshift("Backtrace:").join("#{$/}⮩  "),
+          "while #{receiver}"
+        ].join($/), method, result, *args)
       end
       # rubocop:enable Metrics/MethodLength
       # rubocop:enable Metrics/PerceivedComplexity
