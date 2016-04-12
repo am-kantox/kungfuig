@@ -25,7 +25,6 @@ module Kungfuig
   # rubocop:enable Style/MethodName
   # rubocop:enable Style/VariableName
 
-  # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/MethodLength
   def load_stuff hos
     case hos
@@ -33,13 +32,13 @@ module Kungfuig
     when Hash then Hashie::Mash.new(hos)
     when String
       begin
-        File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos)).tap do |opts|
-          fail ArgumentError.new "#{__callee__} expects valid YAML configuration file or YAML string." unless opts.is_a?(Hash)
-        end
+        File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos))
       rescue ArgumentError
-        fail ArgumentError.new "#{__callee__} expects valid YAML configuration file. [#{hos}] contains invalid syntax."
+        fail ArgumentError, "#{__callee__} expects valid YAML configuration file. “#{hos.inspect}” contains invalid syntax."
       rescue Psych::SyntaxError
-        fail ArgumentError.new "#{__callee__} expects valid YAML configuration string. Got:\n#{hos}"
+        fail ArgumentError, "#{__callee__} expects valid YAML configuration string. Got:\n#{hos.inspect}"
+      rescue
+        fail ArgumentError, "#{__callee__} expects valid YAML configuration string (misspelled file name?). Got:\n#{hos.inspect}"
       end
     when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
     else
@@ -47,7 +46,6 @@ module Kungfuig
     end
   end
   # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/CyclomaticComplexity
   module_function :load_stuff
 
   module InstanceMethods
