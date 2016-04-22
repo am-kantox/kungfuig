@@ -23,3 +23,8 @@ Style/SpecialGlobalVars:
   Exclude:
     - 'lib/**/*'
     - 'spec/**/*'
+
+Style/MultilineBlockChain:
+  Exclude:
+    - 'lib/**/*'
+    - 'spec/**/*'

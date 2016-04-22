@@ -13,6 +13,10 @@ module Kungfuig
         @errors ||= []
       end
 
+      def error! hash, e
+        errors << [hash, e]
+      end
+
       def anteponer *args
         raise MalformedTarget.new "Factory requires a block; use Prepender#new for more accurate tuning", args unless block_given?
         Prepender.new(*args, &Proc.new)
@@ -64,10 +68,6 @@ module Kungfuig
 
     protected
 
-    def record_error hash, e
-      errors << [hash, e]
-    end
-
     def klazz
       return @klazz if @klazz.is_a?(Module)
       @klazz = Kernel.const_get(@klazz) if Kernel.const_defined?(@klazz)
@@ -98,14 +98,14 @@ module Kungfuig
           begin
             λ[:before].call(hash.merge!(args: args, params: params, cb: cb)) if λ[:before]
           rescue => e
-            record_error hash, e
+            Kungfuig::Prepender.error! hash, e
           end
 
           super(*args, **params, &cb).tap do |result|
             begin
               λ[:after].call(hash.merge!(result: result)) if λ[:after]
             rescue => e
-              record_error hash, e
+              Kungfuig::Prepender.error! hash, e
             end
           end
         end
