@@ -12,11 +12,8 @@ describe Kungfuig::Prepender do
       puts "I’d been called #2. Params: #{params.inspect}"
     end
     expect(test.yo(42)).to eq [42, [], {}, nil]
-    expect { test.yo(42) }.to output([
-      "I’d been called #1. Params: {:class=>Test, :method=>:yo, :receiver=>nil, :result=>[42, [], {}, nil]}",
-      "I’d been called #2. Params: {:class=>Test, :method=>:yo, :receiver=>nil, :result=>[42, [], {}, nil]}",
-      ""
-    ].join($/)).to_stdout
+    expect { test.yo(42) }.to output(/been called #1. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo(42) }.to output(/been called #2. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
   end
 
   it 'is not throwing an exception' do
@@ -24,7 +21,6 @@ describe Kungfuig::Prepender do
       raise "NEVER THROWN"
     end
     expect { test.yo(42) }.not_to raise_error
-    expect(Kungfuig::Prepender.errors.size).to eq 1
   end
 
   it 'may be applied to not yet created class' do
@@ -36,7 +32,7 @@ describe Kungfuig::Prepender do
 
     expect { Future.new.yo(42) }.not_to raise_error
     expect(Future.new.yo(42)).to eq [42, [], {}, nil]
-    expect { Future.new.yo(42) }.to output(/:class=>Future/).to_stdout
+    expect { Future.new.yo(42) }.to output(/:klazz=>Future/).to_stdout
   end
 
   it 'calls on_hook' do
@@ -51,7 +47,7 @@ describe Kungfuig::Prepender do
 
     expect { Hooked.new.yo(42) }.not_to raise_error
     expect(Hooked.new.yo(42)).to eq [42, [], {}, nil]
-    expect { Hooked.new.yo(42) }.to output(/:class=>Hooked/).to_stdout
+    expect { Hooked.new.yo(42) }.to output(/:klazz=>Hooked/).to_stdout
   end
 
   it 'may be applied to an instance' do
@@ -62,5 +58,15 @@ describe Kungfuig::Prepender do
     expect(Test.new.yo(42)).to eq [42, [], {}, nil]
     expect { test.yo(42) }.to output(/Class:#<Test:0x0/).to_stdout
     expect { test.yo(42) }.to output(/:receiver=>#<Test:0x0/).to_stdout
+  end
+
+  it 'accumulates errors' do
+    puts "#{'—' * 30}  ERRORS  #{'—' * 30}"
+    Kungfuig::Prepender.errors.each do |e, hash|
+      puts [e.message, hash].inspect
+      puts e.backtrace[0..5].join($/)
+      puts '—' * 70
+    end
+    expect(Kungfuig::Prepender.errors.size).to eq 1
   end
 end

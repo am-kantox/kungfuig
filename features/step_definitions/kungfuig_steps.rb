@@ -53,13 +53,13 @@ When(/^I specify an aspect to be attached to "(.*?)" method$/) do |meth|
       aspect(meth.to_sym) do |*args|
         puts "Hi! I am KUNGFUIG::ASPECT called with parameters: #{args}!"
       end
-    end
+    end.method
   ).to eq(meth.to_sym)
 
   expect(
     @test.aspect(meth.to_sym) do |*args|
       puts "Hi! I am ASPECT called with parameters: #{args}!"
-    end
+    end.method
   ).to eq(meth.to_sym)
 end
 

@@ -23,9 +23,7 @@ module Kungfuig
         )
       end
 
-      # rubocop:disable Metrics/AbcSize
-      # rubocop:disable Metrics/MethodLength
-      def bottleneck(receiver, method, result, *args)
+      def bottleneck(method:nil, receiver:nil, result:nil, args:nil, **_)
         respond_to = ->(m, r) { r.respond_to? m.to_sym }
         r = case receiver
             when Hash, Array, String then receiver
@@ -39,14 +37,12 @@ module Kungfuig
 
         Kernel.const_get(@hash[receiver_class.name][method]).perform_async(r, method, result, *args)
       rescue => e
-        Kungfuig.✍([
+        Kungfuig.✍(receiver: [
           "Fail [#{e.message}]",
           *e.backtrace.unshift("Backtrace:").join("#{$/}⮩  "),
           "while #{receiver}"
-        ].join($/), method, result, *args)
+        ].join($/), method: method, result: result, args: args)
       end
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/AbcSize
     end
   end
 end

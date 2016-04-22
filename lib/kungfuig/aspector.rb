@@ -4,14 +4,22 @@ module Kungfuig
     # Helper methods
     class H
       def value_to_method_list klazz, values_inc, values_exc
-        [values_inc, values_exc].map do |v|
-          v = [*v].map(&:to_sym)
-          case
-          when v.empty? then []
-          when v.include?('*'), v.include?(:'*') then klazz.instance_methods(false)
-          else klazz.instance_methods & v
-          end
-        end.reduce(&:-) - klazz.instance_methods(false).select { |m| m.to_s.start_with?('to_') }
+        # FIXME MOVE JOKER HANDLING INTO PREPENDER !!!!
+        if klazz.is_a?(Module)
+          [values_inc, values_exc].map do |v|
+            v = [*v].map(&:to_sym)
+            case
+            when v.empty? then []
+            when v.include?('*'), v.include?(:'*') then klazz.instance_methods(false)
+            else klazz.instance_methods & v
+            end
+          end.reduce(&:-) - klazz.instance_methods(false).select { |m| m.to_s.start_with?('to_') }
+        else
+          # NOT YET IMPLEMENTED FIXME MOVE TO PREPENDER
+          [values_inc, values_exc].map do |v|
+            [*v].map(&:to_sym)
+          end.reduce(&:-)
+        end
       end
 
       def remap_hash_for_easy_iteration hash
@@ -27,41 +35,34 @@ module Kungfuig
         m, k = string.split('#').reverse
         (k ? Kernel.const_get(k).method(m) : method(m)).to_proc
       end
+
+      def try_to_class name
+        Kernel.const_defined?(name.to_s) ? Kernel.const_get(name.to_s) : name
+      end
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/MethodLength
     def attach(to, before: nil, after: nil, exclude: nil)
-      klazz = begin
-                case to
-                when Class then to                    # got a class! wow, somebody has the documentation read
-                when String then Kernel.const_get(to) # we are ready to get a class name
-                when Symbol then Kernel.const_get(to.to_s)
-                else class << to; self; end           # attach to klazz’s eigenclass if object given
-                end
-              rescue => e
-                raise ArgumentError, "Unable to attach to #{to}. I need a valid class/method name!\nOriginal exception: #{e.message}"
-              end
-
       raise ArgumentError, "Trying to attach nothing to #{klazz}##{to}. I need a block!" unless block_given?
-      klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
+
       cb = Proc.new
 
+      klazz = case to
+              when Module then to # got a class! wow, somebody has the documentation read
+              when String, Symbol then H.new.try_to_class(to) # we are ready to get a class name
+              else class << to; self; end # attach to klazz’s eigenclass if object given
+              end
+
       H.new.value_to_method_list(klazz, before, exclude).each do |m|
-        # FIXME: log methods that failed to be wrapped more accurately? # Kungfuig.✍(klazz, m, e.inspect)
-        klazz.aspect(m, false, &cb)
+        Kungfuig::Prepender.new(to, m).before(&cb)
       end unless before.nil?
 
       H.new.value_to_method_list(klazz, after, exclude).each do |m|
-        # FIXME: log methods that failed to be wrapped more accurately? # Kungfuig.✍(klazz, m, e.inspect)
-        klazz.aspect(m, true, &cb)
+        Kungfuig::Prepender.new(to, m).after(&cb)
       end unless after.nil?
 
       klazz.aspects
     end
     module_function :attach
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/CyclomaticComplexity
 
     # 'Test':
     #   after:

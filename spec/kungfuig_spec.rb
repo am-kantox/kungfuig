@@ -3,9 +3,17 @@ require 'spec_helper'
 describe Kungfuig do
   let(:test) { Test.new }
   let(:test_child) { TestChild.new }
-  let!(:before_aspect_1) { ->(receiver, method, _, *args) { puts "Before1[#{receiver.class}##{method}] | Args: #{args.inspect}" } }
-  let!(:after_aspect_1) { ->(receiver, method, result, *args) { puts "After1[#{receiver.class}##{method}] | Result: #{result}, Args: #{args.inspect}" } }
-  let!(:after_aspect_2) { ->(receiver, method, result, *args) { puts "After2[#{receiver.class}##{method}] | Result: #{result}, Args: #{args.inspect}" } }
+  let!(:before_aspect_1) do
+    lambda do |klazz: nil, receiver: nil, method: nil, args: nil, **params|
+      puts "Before1[#{receiver || klazz}##{method}] | Args: #{args.inspect} | Params: #{params.inspect}"
+    end
+  end
+  let!(:after_aspect_1) do
+    lambda do |klazz: nil, method: nil, args: nil, **params|
+      puts "After1[#{klazz}##{method}] | Result: #{params[:result]}, Args: #{args.inspect}"
+    end
+  end
+  let!(:after_aspect_2) { ->(**params) { puts "After2[#{params[:klazz]}##{params[:method]}] | Result: #{params[:result]}, Args: #{params[:args].inspect}" } }
 
   context 'general' do
     it 'has a version number' do
@@ -16,9 +24,9 @@ describe Kungfuig do
   context 'simple aspects' do
     it 'attaches aspects properly' do
       test.class.send :include, Kungfuig
-      expect(test.class.aspect(:yo, false, &before_aspect_1)).to eq :yo
-      expect(test.class.aspect(:yo, true, &after_aspect_1)).to eq :yo
-      expect(test.class.aspect(:yo, true, &after_aspect_2)).to eq :yo
+      expect(test.class.aspect(:yo, false, &before_aspect_1).method).to eq :yo
+      expect(test.class.aspect(:yo, true, &after_aspect_1).method).to eq :yo
+      expect(test.class.aspect(:yo, true, &after_aspect_2).method).to eq :yo
 
       expect(test.yo(42)).to eq [42, [], {}, nil]
       expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
@@ -28,9 +36,10 @@ describe Kungfuig do
 
   context 'aspector on duty' do
     it 'attaches aspects properly with Aspector' do
-      expect(Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_1)).to be_has_key(:yo)
-      expect(Kungfuig::Aspector.attach(test.class, before: :yo, &before_aspect_1)[:yo][:before].size).to eq 1
-      expect(Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_2)[:yo][:after].size).to eq 2
+      Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_1)
+      Kungfuig::Aspector.attach(test.class, before: :yo, &before_aspect_1)
+      Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_2)
+      expect(test.class.aspects).to eq(yo: 3)
 
       expect(test.yo(42)).to eq [42, [], {}, nil]
       expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
@@ -39,8 +48,7 @@ describe Kungfuig do
 
     it 'attaches aspects properly to instance object’s eigenclass' do
       expect(Kungfuig::Aspector.attach(test, after: :yo, &after_aspect_1)).to be_has_key(:yo)
-      expect(Kungfuig::Aspector.attach(test, before: :yo, &before_aspect_1)[:yo][:before].size).to eq 1
-      expect(Kungfuig::Aspector.attach(test, after: :yo, &after_aspect_2)[:yo][:after].size).to eq 2
+      expect(Kungfuig::Aspector.attach(test, before: :yo, &before_aspect_1)[:yo]).to eq 2
 
       expect(test.yo(42)).to eq [42, [], {}, nil]
       expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]

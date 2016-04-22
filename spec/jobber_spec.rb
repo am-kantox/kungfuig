@@ -6,7 +6,7 @@ class TestWorker
   include Sidekiq::Worker
 
   def perform(receiver, method, result, *args)
-    Kungfuig.✍("TestWorker :: got #{receiver.inspect} while", method, result, *args) unless receiver.is_a?(Test) && method.to_s == 'yo'
+    Kungfuig.✍(receiver: "TestWorker :: got #{receiver.inspect} while", method: method, result: result, args: args) unless receiver.is_a?(Test) && method.to_s == 'yo'
   end
 end
 
@@ -20,7 +20,7 @@ describe Kungfuig::Jobber do
 YAML
     bulk = Kungfuig::Jobber.bulk(yaml)
     expect(bulk).to be_truthy
-    expect(bulk.inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
+    expect(bulk.inspect).to match(/"Test"=>\[{:yo=>1}\]/)
 
     expect(test.yo(42)).to eq [42, [], {}, nil]
     expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
@@ -32,7 +32,7 @@ YAML
 'Test':
   'yo': 'TestWorkerHARM'
 YAML
-    expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[\{:yo=>\{:after=>\[#<Proc:/)
+    expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[{:yo=>1}\]/)
 
     expect(test.yo(42)).to eq [42, [], {}, nil] # prints a backtrace
   end

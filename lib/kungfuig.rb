@@ -7,14 +7,10 @@ require 'kungfuig/aspector'
 require 'kungfuig/prepender'
 
 module Kungfuig
-  ASPECT_PREFIX = '♻_'.freeze
-  ASPECT_TEMPLATE = -> { %i(after before).map { |k| [k, []] }.to_h }
-
   MX = Mutex.new
 
-  # rubocop:disable Style/VariableName
   # rubocop:disable Style/MethodName
-  def ✍(receiver, method, result, *args)
+  def ✍(receiver: nil, method: nil, result: nil, args: nil, **params)
     require 'logger'
     @✍ ||= Kernel.const_defined?('Rails') && Rails.logger || Logger.new($stdout)
     message = receiver.is_a?(String) ? "#{receiver} | #{method}" : "#{receiver.class}##{method}"
@@ -24,9 +20,7 @@ module Kungfuig
   end
   module_function :✍
   # rubocop:enable Style/MethodName
-  # rubocop:enable Style/VariableName
 
-  # rubocop:disable Metrics/MethodLength
   def load_stuff hos
     case hos
     when NilClass then Hashie::Mash.new # aka skip
@@ -46,7 +40,6 @@ module Kungfuig
       fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
     end
   end
-  # rubocop:enable Metrics/MethodLength
   module_function :load_stuff
 
   module InstanceMethods
@@ -114,14 +107,6 @@ module Kungfuig
       options.deep_merge! Kungfuig.load_stuff hos
     end
     private :merge_hash_or_string!
-
-    def lookup_aspects meth
-      # ⇓⇓⇓ eigenclass              ⇓⇓⇓ ancestors
-      [(class << self; self; end), *self.class.ancestors].inject(ASPECT_TEMPLATE.call) do |memo, c|
-        c.respond_to?(:aspects?) && c.aspects? ? c.aspects(meth.to_sym).merge(memo) { |_, c1, c2| c1 | c2 } : memo
-      end
-    end
-    private :lookup_aspects
   end
 
   def self.included base
@@ -146,41 +131,18 @@ module Kungfuig
       instance_eval(&block)
     end
 
-    # rubocop:disable Metrics/MethodLength
     def aspect meth, after = true
       fail ArgumentError.new "Aspect must have a codeblock" unless block_given?
       fail NoMethodError.new "Aspect must be attached to existing method" unless instance_methods.include? meth.to_sym
 
-      aspects(meth)[after ? :after : :before] << Proc.new
-
-      unless instance_methods.include?(:"#{ASPECT_PREFIX}#{meth}")
-        class_eval <<-CODE
-          alias_method :'#{ASPECT_PREFIX}#{meth}', :'#{meth}'
-          def #{meth}(*args, &cb)
-            ps = lookup_aspects(:'#{meth}')
-            ps[:before].each do |p|
-              p.call(self, :'#{meth}', nil, *args) # FIXME: allow argument modification!!!
-            end
-            send(:'#{ASPECT_PREFIX}#{meth}', *args, &cb).tap do |result|
-              ps[:after].each do |p|
-                p.call(self, :'#{meth}', result, *args)
-              end
-            end
-          end
-        CODE
-      end
-
-      meth.to_sym
-    end
-    # rubocop:enable Metrics/MethodLength
-
-    def aspects?
-      @aspects.is_a?(Hash)
+      Kungfuig::Prepender.new(self, meth).public_send((after ? :after : :before), &Proc.new)
     end
 
-    def aspects meth = nil
-      @aspects ||= {}
-      meth ? @aspects[meth.to_sym] ||= Kungfuig::ASPECT_TEMPLATE.call : @aspects
+    def aspects
+      ancestors.select { |a| a.name.nil? && a.ancestors.include?(I★I) }
+               .flat_map { |m| m.instance_methods(false) }
+               .group_by { |e| e }
+               .map { |k, v| [k, v.count] }.to_h
     end
     alias_method :set, :option!
   end

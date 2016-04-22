@@ -1,4 +1,16 @@
 module Kungfuig
+  module I★I
+  end
+
+  LAMBDA = lambda do |λ, e, **hash|
+    begin
+      Kungfuig::Prepender.error! e, **hash
+      λ[:on_error].call(e, **hash) if λ[:on_error]
+    rescue => e
+      Kungfuig::Prepender.error! e, reason: :on_error
+    end
+  end
+
   class Prepender
     class MalformedTarget < StandardError
       def initialize msg, args
@@ -13,8 +25,8 @@ module Kungfuig
         @errors ||= []
       end
 
-      def error! hash, e
-        errors << [hash, e]
+      def error! e, **hash
+        errors << [e, hash]
       end
 
       def anteponer *args
@@ -22,6 +34,8 @@ module Kungfuig
         Prepender.new(*args, &Proc.new)
       end
     end
+
+    attr_reader :method, :receiver, :options, :λ
 
     # Parameters might be:
     # • 1
@@ -65,6 +79,7 @@ module Kungfuig
     end
     alias_method :after, :before
     alias_method :on_hook, :before
+    alias_method :on_error, :before
 
     protected
 
@@ -81,42 +96,50 @@ module Kungfuig
 
     def to_hash
       {
-        class: klazz,
+        klazz: klazz,
         method: @method,
-        receiver: @receiver,
         lambdas: @λ
       }
     end
 
     def hook
-      status = false
+      status = {}
 
       λ = (hash = to_hash).delete(:lambdas)
 
       p = Module.new do
+        include Kungfuig::I★I
         define_method(hash[:method]) do |*args, **params, &cb|
+          before_params = hash.merge(receiver: self, args: args, params: params, cb: cb)
           begin
-            λ[:before].call(hash.merge!(args: args, params: params, cb: cb)) if λ[:before]
+            λ[:before].call(**before_params) if λ[:before]
           rescue => e
-            Kungfuig::Prepender.error! hash, e
+            status[:before] = e
+            LAMBDA.call λ, e, **hash
           end
 
           super(*args, **params, &cb).tap do |result|
             begin
-              λ[:after].call(hash.merge!(result: result)) if λ[:after]
+              λ[:after].call(**before_params.merge(result: result)) if λ[:after]
             rescue => e
-              Kungfuig::Prepender.error! hash, e
+              status[:after] = e
+              LAMBDA.call λ, e, **hash
             end
           end
         end
       end
-      klazz.send :prepend, p
+      klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
+      klazz.send(:prepend, p)
 
     rescue => e
-      status = e
+      status[:rescued] = e
       raise MalformedTarget.new e.message, "#{@klazz}##{@method}" if AGRESSIVE_ERRORS
     ensure
-      λ[:on_hook].call(status) if λ[:on_hook]
+      begin
+        λ[:on_hook].call(status) if λ[:on_hook]
+      rescue => e
+        LAMBDA.call λ, e, reason: :on_hook
+      end
     end
 
     def postpone_hook
