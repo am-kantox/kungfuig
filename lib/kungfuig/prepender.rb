@@ -104,7 +104,6 @@ module Kungfuig
 
     def hook
       status = {}
-
       λ = (hash = to_hash).delete(:lambdas)
 
       p = Module.new do
@@ -130,7 +129,6 @@ module Kungfuig
       end
       klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
       klazz.send(:prepend, p)
-
     rescue => e
       status[:rescued] = e
       raise MalformedTarget.new e.message, "#{@klazz}##{@method}" if AGRESSIVE_ERRORS

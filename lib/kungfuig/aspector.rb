@@ -18,7 +18,7 @@ module Kungfuig
           # NOT YET IMPLEMENTED FIXME MOVE TO PREPENDER
           [values_inc, values_exc].map do |v|
             [*v].map(&:to_sym)
-          end.reduce(&:-)
+          end.reduce(&:-) - [:'*']
         end
       end
 
@@ -60,7 +60,7 @@ module Kungfuig
         Kungfuig::Prepender.new(to, m).after(&cb)
       end unless after.nil?
 
-      klazz.aspects
+      klazz.is_a?(Module) ? klazz.aspects : { promise: klazz }
     end
     module_function :attach
 

@@ -93,5 +93,22 @@ YAML
       expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
       expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
     end
+
+    it 'accepts promises for bulk attach' do
+      yaml = <<YAML
+'TestFuture':
+  after:
+    'yo': 'Kungfuig#✍'
+  before:
+    'yo': 'Kungfuig#✍'
+YAML
+      expect(Kungfuig::Aspector.bulk(yaml)).to be_truthy
+
+      class TestFuture < Test; end
+
+      expect(TestFuture.new.yo(42)).to eq [42, [], {}, nil]
+      expect(TestFuture.new.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
+      expect(TestFuture.new.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+    end
   end
 end
