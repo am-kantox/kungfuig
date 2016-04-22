@@ -10,6 +10,11 @@ Style/AsciiComments:
     - 'lib/**/*'
     - 'spec/**/*'
 
+Style/Documentation:
+  Exclude:
+    - 'lib/**/*'
+    - 'spec/**/*'
+
 Style/RaiseArgs:
   Exclude:
     - 'lib/**/*'

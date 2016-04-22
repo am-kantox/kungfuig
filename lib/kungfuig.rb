@@ -4,6 +4,7 @@ require 'hashie'
 require 'kungfuig/version'
 require 'kungfuig/color'
 require 'kungfuig/aspector'
+require 'kungfuig/prepender'
 
 module Kungfuig
   ASPECT_PREFIX = '♻_'.freeze
