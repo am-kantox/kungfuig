@@ -22,6 +22,7 @@ YAML
     expect(bulk).to be_truthy
     expect(bulk.inspect).to match(/"Test"=>\[{:yo=>1}\]/)
 
+    # FIXME: test job scheduling
     expect(test.yo(42)).to eq [42, [], {}, nil]
     expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
     expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
@@ -33,8 +34,7 @@ YAML
   'yo': 'TestWorkerHARM'
 YAML
     expect(Kungfuig::Jobber.bulk(yaml).inspect).to match(/"Test"=>\[{:yo=>1}\]/)
-
-    expect(test.yo(42)).to eq [42, [], {}, nil] # prints a backtrace
+    expect { test.yo(42) }.to output(%r{kungfuig/spec/jobber_spec.rb}).to_stdout # prints a backtrace
   end
 
   it 'schedules sidekiq jobs on execution' do

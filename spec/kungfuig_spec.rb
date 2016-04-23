@@ -15,6 +15,12 @@ describe Kungfuig do
   end
   let!(:after_aspect_2) { ->(**params) { puts "After2[#{params[:klazz]}##{params[:method]}] | Result: #{params[:result]}, Args: #{params[:args].inspect}" } }
 
+  let!(:re) { /\ABefore1.*?| Args: \[42\].*?After1.*?After2.*?| Result: \[42, \[\], {}, nil\], Args: \[42\]\z/ }
+  let!(:re1) { /\ABefore1.*?| Args: \[42, :p1, :p2\] | Params: {:params=>{}, :cb=>nil}.*?After1.*?After2.*?| Result: \[42, \[\], \{\}, nil\], Args: \[42\]\z/ }
+  let!(:re2) { /\ABefore1.*?| Args: \[42, :p1, :p2\] | Params: {:params=>{:sp1=>1, :sp2=>1}, :cb=>nil}.*?After1.*?After2.*?| Result: \[42, \[\], \{\}, nil\], Args: \[42\]\z/ }
+
+  let!(:re4) { /\AInside TestChild#yo.*After1\[Test#yo\].*?After2\[TestChild#yo\]/m }
+
   context 'general' do
     it 'has a version number' do
       expect(Kungfuig::VERSION).not_to be nil
@@ -28,9 +34,9 @@ describe Kungfuig do
       expect(test.class.aspect(:yo, true, &after_aspect_1).method).to eq :yo
       expect(test.class.aspect(:yo, true, &after_aspect_2).method).to eq :yo
 
-      expect(test.yo(42)).to eq [42, [], {}, nil]
-      expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
-      expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+      expect { test.yo(42) }.to output(re).to_stdout
+      expect { test.yo(42, :p1, :p2) }.to output(re1).to_stdout
+      expect { test.yo(42, :p1, :p2, sp1: 1, sp2: 1) }.to output(re2).to_stdout
     end
   end
 
@@ -41,27 +47,27 @@ describe Kungfuig do
       Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_2)
       expect(test.class.aspects).to eq(yo: 3)
 
-      expect(test.yo(42)).to eq [42, [], {}, nil]
-      expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
-      expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+      expect { test.yo(42) }.to output(re).to_stdout
+      expect { test.yo(42, :p1, :p2) }.to output(re1).to_stdout
+      expect { test.yo(42, :p1, :p2, sp1: 1, sp2: 1) }.to output(re2).to_stdout
     end
 
     it 'attaches aspects properly to instance object’s eigenclass' do
       expect(Kungfuig::Aspector.attach(test, after: :yo, &after_aspect_1)).to be_has_key(:yo)
       expect(Kungfuig::Aspector.attach(test, before: :yo, &before_aspect_1)[:yo]).to eq 2
 
-      expect(test.yo(42)).to eq [42, [], {}, nil]
-      expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
-      expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+      expect { test.yo(42) }.to output(re).to_stdout
+      expect { test.yo(42, :p1, :p2) }.to output(re1).to_stdout
+      expect { test.yo(42, :p1, :p2, sp1: 1, sp2: 1) }.to output(re2).to_stdout
     end
 
     it 'all aspects in class hierarchy are called' do
       expect(Kungfuig::Aspector.attach(test.class, after: :yo, &after_aspect_1)).to be_has_key(:yo)
       expect(Kungfuig::Aspector.attach(test_child.class, after: :yo, &after_aspect_2)).to be_has_key(:yo)
 
-      expect(test_child.yo(42)).to eq [42, [], {}, nil]
-      expect(test_child.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
-      expect(test_child.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+      expect { test_child.yo(42) }.to output(re4).to_stdout
+      expect { test_child.yo(42, :p1, :p2) }.to output(re4).to_stdout
+      expect { test_child.yo(42, :p1, :p2, sp1: 1, sp2: 1) }.to output(re4).to_stdout
     end
   end
 
