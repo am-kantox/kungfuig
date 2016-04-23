@@ -6,14 +6,22 @@ describe Kungfuig::Prepender do
 
   it 'is executed instead of original method' do
     Kungfuig::Prepender.anteponer :test, :yo do |**params|
-      puts "I’d been called #1. Params: #{params.inspect}"
+      puts "#1. Params: #{params.inspect}"
     end
     Kungfuig::Prepender.anteponer :test, :yo do |**params|
-      puts "I’d been called #2. Params: #{params.inspect}"
+      puts "#2. Params: #{params.inspect}"
     end
     expect(test.yo(42)).to eq [42, [], {}, nil]
-    expect { test.yo(42) }.to output(/been called #1. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
-    expect { test.yo(42) }.to output(/been called #2. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo(42) }.to output(/#1. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo(42) }.to output(/#2. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+  end
+
+  it 'wraps methods having no parameters' do
+    Kungfuig::Prepender.anteponer :test, :yo_no_params do |**params|
+      puts "Params: #{params.inspect}"
+    end
+    expect(test.yo_no_params).to eq [nil]
+    expect { test.yo_no_params }.to output(/\AParams: {:klazz=>Test, :method=>:yo_no_params, :receiver=>#<Test:0x0/).to_stdout
   end
 
   it 'is not throwing an exception' do

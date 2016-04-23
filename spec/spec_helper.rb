@@ -9,6 +9,11 @@ RSpec.configure do |config|
     Object.send(:remove_const, 'TestChild') if Kernel.const_defined?('TestChild')
     Object.send(:remove_const, 'Test') if Kernel.const_defined?('Test')
     Test = Class.new do
+      def yo_no_params
+        block_result = yield if block_given?
+        [@result = block_result]
+      end
+
       def yo(param, *rest, **splat)
         block_result = yield if block_given?
         [@param = param, @rest = rest, @splat = splat, @result = block_result]

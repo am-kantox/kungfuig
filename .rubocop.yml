@@ -28,3 +28,18 @@ Style/MultilineBlockChain:
   Exclude:
     - 'lib/**/*'
     - 'spec/**/*'
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/CyclomaticComplexity:
+  Max: 20
+
+Metrics/LineLength:
+  Max: 180
+
+Metrics/MethodLength:
+  Max: 42
+
+Metrics/PerceivedComplexity:
+  Max: 20

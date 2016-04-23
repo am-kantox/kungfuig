@@ -102,6 +102,9 @@ module Kungfuig
       }
     end
 
+    # rubocop:disable Style/NestedTernaryOperator
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/PerceivedComplexity
     def hook
       status = {}
       λ = (hash = to_hash).delete(:lambdas)
@@ -117,7 +120,7 @@ module Kungfuig
             LAMBDA.call λ, e, **hash
           end
 
-          super(*args, **params, &cb).tap do |result|
+          (args.empty? ? (params.empty? ? super(&cb) : super(**params)) : super(*args, **params, &cb)).tap do |result|
             begin
               λ[:after].call(**before_params.merge(result: result)) if λ[:after]
             rescue => e
@@ -127,6 +130,9 @@ module Kungfuig
           end
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Style/NestedTernaryOperator
       klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
       klazz.send(:prepend, p)
     rescue => e

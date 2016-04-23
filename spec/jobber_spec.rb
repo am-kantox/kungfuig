@@ -47,7 +47,7 @@ YAML
 
     [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
       expect(TestWorker.jobs.size).to eq idx
-      expect(test.yo(args)).to be_truthy
+      expect(test.yo(*args)).to be_truthy
       sleep 0.5
       expect(TestWorker.jobs.size).to eq(idx + 1)
     end
