@@ -3,10 +3,8 @@ require 'rspec-sidekiq'
 require 'kungfuig/jobber'
 
 class TestWorker
-  include Sidekiq::Worker
-
-  def perform *args
-    Kungfuig.✍(receiver: "TestWorker :: got #{args.inspect}") unless args.first.is_a?(Hash) && args.first['receiver'].is_a?(Test) && method.to_s == 'yo'
+  def perform *args, **params
+    Kungfuig.✍(receiver: "TestWorker :: got args «#{args.inspect}» and params «#{params.inspect}»")
   end
 end
 
