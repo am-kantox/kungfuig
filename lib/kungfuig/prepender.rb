@@ -103,8 +103,6 @@ module Kungfuig
     end
 
     # rubocop:disable Style/NestedTernaryOperator
-    # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/PerceivedComplexity
     def hook
       status = {}
       λ = (hash = to_hash).delete(:lambdas)
@@ -130,9 +128,6 @@ module Kungfuig
           end
         end
       end
-      # rubocop:enable Metrics/PerceivedComplexity
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Style/NestedTernaryOperator
       klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
       klazz.send(:prepend, p)
     rescue => e
@@ -145,6 +140,7 @@ module Kungfuig
         LAMBDA.call λ, e, reason: :on_hook
       end
     end
+    # rubocop:enable Style/NestedTernaryOperator
 
     def postpone_hook
       return hook if ready?

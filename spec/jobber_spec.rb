@@ -5,8 +5,8 @@ require 'kungfuig/jobber'
 class TestWorker
   include Sidekiq::Worker
 
-  def perform(receiver, method, result, *args)
-    Kungfuig.✍(receiver: "TestWorker :: got #{receiver.inspect} while", method: method, result: result, args: args) unless receiver.is_a?(Test) && method.to_s == 'yo'
+  def perform *args
+    Kungfuig.✍(receiver: "TestWorker :: got #{args.inspect}") unless args.first.is_a?(Hash) && args.first['receiver'].is_a?(Test) && method.to_s == 'yo'
   end
 end
 
@@ -47,7 +47,7 @@ YAML
 
     [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
       expect(TestWorker.jobs.size).to eq idx
-      expect(test.yo(*args)).to be_truthy
+      expect(test.yo(args)).to be_truthy
       sleep 0.5
       expect(TestWorker.jobs.size).to eq(idx + 1)
     end

@@ -23,7 +23,7 @@ module Kungfuig
         )
       end
 
-      def bottleneck(method:nil, receiver:nil, result:nil, args:nil, **_)
+      def bottleneck(method: nil, receiver: nil, result: nil, args: nil, **params)
         respond_to = ->(m, r) { r.respond_to? m.to_sym }
         r = case receiver
             when Hash, Array, String then receiver
@@ -35,7 +35,7 @@ module Kungfuig
           @hash[c.name] && @hash[c.name][method]
         end)
 
-        Kernel.const_get(@hash[receiver_class.name][method]).perform_async(r, method, result, *args)
+        Kernel.const_get(@hash[receiver_class.name][method]).perform_async(receiver: r, method: method, result: result, args: args, params: params)
       rescue => e
         Kungfuig.✍(receiver: [
           "Fail [#{e.message}]",
