@@ -3,6 +3,9 @@ require 'pry'
 require 'rspec'
 require 'kungfuig'
 
+require 'codeclimate-test-reporter'
+CodeClimate::TestReporter.start
+
 RSpec.configure do |config|
   config.before(:each) do
     Sidekiq::Worker.clear_all if Kernel.const_defined?('Sidekiq::Worker')

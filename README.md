@@ -3,6 +3,8 @@
 **Kungfuig** (_pronounced: [ˌkʌŋˈfig]_) provides a drastically easy way to plug configuration into everything.
 
 [![Build Status](https://travis-ci.org/am-kantox/kungfuig.svg\?branch\=master)](https://travis-ci.org/am-kantox/kungfuig)
+[![Code Climate](https://codeclimate.com/github/am-kantox/kungfuig/badges/gpa.svg)](https://codeclimate.com/github/am-kantox/kungfuig)
+[![Issue Count](https://codeclimate.com/github/am-kantox/kungfuig/badges/issue_count.svg)](https://codeclimate.com/github/am-kantox/kungfuig)
 
 ## Config on steroids
 
