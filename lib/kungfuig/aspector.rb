@@ -52,13 +52,11 @@ module Kungfuig
               else class << to; self; end # attach to klazz’s eigenclass if object given
               end
 
-      H.new.value_to_method_list(klazz, before, exclude).each do |m|
-        Kungfuig::Prepender.new(to, m).before(&cb)
-      end unless before.nil?
-
-      H.new.value_to_method_list(klazz, after, exclude).each do |m|
-        Kungfuig::Prepender.new(to, m).after(&cb)
-      end unless after.nil?
+      { before: before, after: after }.each do |k, var|
+        H.new.value_to_method_list(klazz, var, exclude).each do |m|
+          Kungfuig::Prepender.new(to, m).public_send(k, &cb)
+        end unless var.nil?
+      end
 
       klazz.is_a?(Module) ? klazz.aspects : { promise: klazz }
     end

@@ -1,5 +1,35 @@
 inherit_from: .rubocop_todo.yml
 
+# Offense count: 6
+# Cop supports --auto-correct.
+# Configuration parameters: , SupportedStyles.
+# SupportedStyles: only_raise, only_fail, semantic
+Style/SignalException:
+  EnforcedStyle: semantic
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/CyclomaticComplexity:
+  Max: 20
+
+Metrics/LineLength:
+  Max: 180
+
+Metrics/MethodLength:
+  Max: 42
+
+Metrics/PerceivedComplexity:
+  Max: 20
+
+Metrics/AbcSize:
+  Max: 42
+
+Style/EmptyCaseCondition:
+  Exclude:
+    - 'lib/**/*'
+    - 'spec/**/*'
+
 Style/AsciiIdentifiers:
   Exclude:
     - 'lib/**/*'
@@ -28,18 +58,3 @@ Style/MultilineBlockChain:
   Exclude:
     - 'lib/**/*'
     - 'spec/**/*'
-
-Metrics/ClassLength:
-  Max: 200
-
-Metrics/CyclomaticComplexity:
-  Max: 20
-
-Metrics/LineLength:
-  Max: 180
-
-Metrics/MethodLength:
-  Max: 42
-
-Metrics/PerceivedComplexity:
-  Max: 20

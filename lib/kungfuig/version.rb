@@ -1,3 +1,3 @@
 module Kungfuig
-  VERSION = "0.6.80"
+  VERSION = "0.7.0"
 end
