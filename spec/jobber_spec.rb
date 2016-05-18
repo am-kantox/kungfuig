@@ -20,6 +20,20 @@ describe Kungfuig::Jobber do
     yaml = <<YAML
 'Test':
   'yo': 'TestWorker'
+YAML
+    bulk = Kungfuig::Jobber.bulk(yaml)
+    expect(bulk).to be_truthy
+    expect(bulk.inspect).to match(/"Test"=>\[{:yo=>1}\]/)
+
+    # FIXME: test job scheduling
+    expect(test.yo(42)).to eq [42, [], {}, nil]
+    expect(test.yo(42, :p1, :p2)).to eq [42, [:p1, :p2], {}, nil]
+    expect(test.yo(42, :p1, :p2, sp1: 1, sp2: 1)).to eq [42, [:p1, :p2], {sp1: 1, sp2: 1}, nil]
+  end
+
+  it 'accepts YAML for bulk jobber (simple string)' do
+    yaml = <<YAML
+'Test':
   'yo': 'TestWorkerString'
 YAML
     bulk = Kungfuig::Jobber.bulk(yaml)
