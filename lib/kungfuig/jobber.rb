@@ -3,7 +3,7 @@ require 'rubygems/exceptions'
 
 begin
   require 'sidekiq'
-  raise LoadError.new unless Kernel.const_defined?('Sidekiq')
+  fail LoadError.new unless Kernel.const_defined?('Sidekiq')
 rescue LoadError
   raise(Gem::DependencyError, "Sidekiq id required to use this functionality!")
 end
@@ -14,7 +14,7 @@ module Kungfuig
 
   module Worker
     def self.prepended base
-      raise JobberError.new("Must be prepended to class defining ‘perform’ method!") unless base.instance_methods.include?(:perform)
+      fail JobberError.new("Must be prepended to class defining ‘perform’ method!") unless base.instance_methods.include?(:perform)
       base.send(:include, Sidekiq::Worker) unless base.ancestors.include? Sidekiq::Worker
     end
 

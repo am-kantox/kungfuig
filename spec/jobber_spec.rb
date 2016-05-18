@@ -7,6 +7,11 @@ class TestWorker
     Kungfuig.✍(receiver: "TestWorker :: got args «#{args.inspect}» and params «#{params.inspect}»")
   end
 end
+class TestWorkerString
+  def perform param
+    Kungfuig.✍(receiver: param)
+  end
+end
 
 describe Kungfuig::Jobber do
   let(:test) { Test.new }
@@ -15,6 +20,7 @@ describe Kungfuig::Jobber do
     yaml = <<YAML
 'Test':
   'yo': 'TestWorker'
+  'yo': 'TestWorkerString'
 YAML
     bulk = Kungfuig::Jobber.bulk(yaml)
     expect(bulk).to be_truthy

@@ -42,7 +42,7 @@ module Kungfuig
     end
 
     def attach(to, before: nil, after: nil, exclude: nil)
-      raise ArgumentError, "Trying to attach nothing to #{klazz}##{to}. I need a block!" unless block_given?
+      fail ArgumentError, "Trying to attach nothing to #{klazz}##{to}. I need a block!" unless block_given?
 
       cb = Proc.new
 
