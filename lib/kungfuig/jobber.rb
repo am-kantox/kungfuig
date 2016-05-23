@@ -40,12 +40,9 @@ module Kungfuig
         )
       end
 
-      def bottleneck(method: nil, receiver: nil, result: nil, args: nil, **params)
+      def bottleneck(method: nil, receiver: nil, result: nil, **params)
         respond_to = ->(m, r) { r.respond_to? m.to_sym }
-        require 'pry'
-        binding.pry
 
-        
         r = case receiver
             when Hash, Array, String then receiver
             when respond_to.curry[:to_hash] then receiver.to_hash
@@ -58,13 +55,13 @@ module Kungfuig
 
         destination = Kernel.const_get(@hash[receiver_class.name][method])
         destination.send(:prepend, Kungfuig::Worker) unless destination.ancestors.include? Kungfuig::Worker
-        destination.perform_async(receiver: r, method: method, result: result, args: args, params: params)
+        destination.perform_async(receiver: r, method: method, result: result, **params)
       rescue => e
         Kungfuig.✍(receiver: [
           "Fail [#{e.message}]",
           *e.backtrace.unshift("Backtrace:").join("#{$/}⮩  "),
           "while #{receiver}"
-        ].join($/), method: method, result: result, args: args)
+        ].join($/), method: method, result: result, args: params)
       end
     end
   end

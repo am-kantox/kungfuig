@@ -12,8 +12,8 @@ describe Kungfuig::Prepender do
       puts "#2. Params: #{params.inspect}"
     end
     expect(test.yo(42)).to eq [42, [], {}, nil]
-    expect { test.yo(42) }.to output(/#1. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
-    expect { test.yo(42) }.to output(/#2. Params: {:klazz=>Test, :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo(42) }.to output(/#1. Params: {:klazz=>"Test", :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo(42) }.to output(/#2. Params: {:klazz=>"Test", :method=>:yo, :receiver=>#<Test:0x0/).to_stdout
   end
 
   it 'wraps methods having no parameters' do
@@ -21,7 +21,7 @@ describe Kungfuig::Prepender do
       puts "Params: #{params.inspect}"
     end
     expect(test.yo_no_params).to eq [nil]
-    expect { test.yo_no_params }.to output(/\AParams: {:klazz=>Test, :method=>:yo_no_params, :receiver=>#<Test:0x0/).to_stdout
+    expect { test.yo_no_params }.to output(/\AParams: {:klazz=>"Test", :method=>:yo_no_params, :receiver=>#<Test:0x0/).to_stdout
   end
 
   it 'is not throwing an exception' do
@@ -40,7 +40,7 @@ describe Kungfuig::Prepender do
 
     expect { Future.new.yo(42) }.not_to raise_error
     expect(Future.new.yo(42)).to eq [42, [], {}, nil]
-    expect { Future.new.yo(42) }.to output(/:klazz=>Future/).to_stdout
+    expect { Future.new.yo(42) }.to output(/:klazz=>"Future"/).to_stdout
   end
 
   it 'calls on_hook' do
@@ -55,7 +55,7 @@ describe Kungfuig::Prepender do
 
     expect { Hooked.new.yo(42) }.not_to raise_error
     expect(Hooked.new.yo(42)).to eq [42, [], {}, nil]
-    expect { Hooked.new.yo(42) }.to output(/:klazz=>Hooked/).to_stdout
+    expect { Hooked.new.yo(42) }.to output(/:klazz=>"Hooked"/).to_stdout
   end
 
   it 'may be applied to an instance' do

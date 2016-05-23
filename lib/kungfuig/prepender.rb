@@ -30,7 +30,7 @@ module Kungfuig
       end
 
       def anteponer *args
-        raise MalformedTarget.new "Factory requires a block; use Prepender#new for more accurate tuning", args unless block_given?
+        fail MalformedTarget.new "Factory requires a block; use Prepender#new for more accurate tuning", args unless block_given?
         Prepender.new(*args, &Proc.new)
       end
     end
@@ -67,8 +67,8 @@ module Kungfuig
       @options = params
       after(Proc.new) if block_given? # assign the block to after by default
 
-      raise MalformedTarget.new "Unable to lookup class", args unless @klazz
-      raise MalformedTarget.new "Unable to lookup method", args unless @method
+      fail MalformedTarget.new "Unable to lookup class", args unless @klazz
+      fail MalformedTarget.new "Unable to lookup method", args unless @method
 
       postpone_hook
     end
@@ -96,7 +96,7 @@ module Kungfuig
 
     def to_hash
       {
-        klazz: klazz,
+        klazz: klazz.to_s,
         method: @method,
         lambdas: @λ
       }
@@ -110,7 +110,7 @@ module Kungfuig
       p = Module.new do
         include Kungfuig::I★I
         define_method(hash[:method]) do |*args, **params, &cb|
-          before_params = hash.merge(receiver: self, args: args, params: params, cb: cb)
+          before_params = hash.merge(receiver: self, ★: args, ★★: params, λ: cb)
           begin
             λ[:before].call(**before_params) if λ[:before]
           rescue => e
