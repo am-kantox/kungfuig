@@ -42,6 +42,10 @@ module Kungfuig
 
       def bottleneck(method: nil, receiver: nil, result: nil, args: nil, **params)
         respond_to = ->(m, r) { r.respond_to? m.to_sym }
+        require 'pry'
+        binding.pry
+
+        
         r = case receiver
             when Hash, Array, String then receiver
             when respond_to.curry[:to_hash] then receiver.to_hash
