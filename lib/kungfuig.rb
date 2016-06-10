@@ -29,11 +29,11 @@ module Kungfuig
       begin
         File.exist?(hos) ? Hashie::Mash.load(hos) : Hashie::Mash.new(YAML.load(hos))
       rescue ArgumentError
-        fail ArgumentError, "#{__callee__} expects valid YAML configuration file. “#{hos.inspect}” contains invalid syntax."
+        raise ArgumentError, "#{__callee__} expects valid YAML configuration file. “#{hos.inspect}” contains invalid syntax."
       rescue Psych::SyntaxError
-        fail ArgumentError, "#{__callee__} expects valid YAML configuration string. Got:\n#{hos.inspect}"
+        raise ArgumentError, "#{__callee__} expects valid YAML configuration string. Got:\n#{hos.inspect}"
       rescue
-        fail ArgumentError, "#{__callee__} expects valid YAML configuration string (misspelled file name?). Got:\n#{hos.inspect}"
+        raise ArgumentError, "#{__callee__} expects valid YAML configuration string (misspelled file name?). Got:\n#{hos.inspect}"
       end
     when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
     else
@@ -56,10 +56,14 @@ module Kungfuig
 
     # Options getter
     # @return [Hashie::Mash] options
-    def options
+    def __options__
       @options ||= Hashie::Mash.new
     end
-    private :options
+    private :__options__
+
+    def options
+      __options__.dup
+    end
 
     # Accepts:
     #     option :foo, :bar, 'baz'
@@ -67,15 +71,15 @@ module Kungfuig
     #     option 'foo.bar.baz'
     #     option 'foo::bar::baz'
     def option *keys
-      key = keys.join('.').gsub(/::/, '.').split('.')
+      key = keys.map(&:to_s).join('.').gsub(/::/, '.').split('.')
 
       MX.synchronize {
         # options.foo!.bar!.baz!
         [key, key[1..-1]].map do |candidate|
-          candidate.inject(options.dup) do |memo, k|
+          candidate && candidate.inject(options) do |memo, k|
             memo.public_send(k.to_s) unless memo.nil?
           end
-        end.detect { |e| e }
+        end.compact.first
       }
     end
 
@@ -84,12 +88,12 @@ module Kungfuig
     #     option! 'foo.bar.baz', value
     #     option! 'foo::bar::baz', value
     def option! keys, value
-      key = (keys.is_a?(Array) ? keys.join('.') : keys).gsub(/::/, '.').split('.')
+      key = (keys.is_a?(Array) ? keys.join('.') : keys.to_s).gsub(/::/, '.').split('.')
       last = key.pop
 
       MX.synchronize {
         # options.foo!.bar!.baz! = value
-        build = key.inject(options) do |memo, k|
+        build = key.inject(__options__) do |memo, k|
           memo.public_send("#{k}!")
         end
         build[last] = value
@@ -104,7 +108,7 @@ module Kungfuig
     #   mash or string (when string, should be either valid YAML file name or
     #   string with valid YAML)
     def merge_hash_or_string! hos
-      options.deep_merge! Kungfuig.load_stuff hos
+      __options__.deep_merge! Kungfuig.load_stuff hos
     end
     private :merge_hash_or_string!
   end
