@@ -49,7 +49,7 @@ module Kungfuig
     def kungfuig hos = nil
       MX.synchronize {
         merge_hash_or_string! hos
-        yield options if block_given?
+        yield __options__ if block_given?
         options
       }
     end
