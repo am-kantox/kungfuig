@@ -2,19 +2,9 @@ require 'spec_helper'
 require 'rspec-sidekiq'
 require 'kungfuig/jobber'
 
-class TestWorker
-  def perform *args, **params
-    Kungfuig.✍(receiver: "TestWorker :: got args «#{args.inspect}» and params «#{params.inspect}»")
-  end
-end
-class TestWorkerString
-  def perform param
-    Kungfuig.✍(receiver: param)
-  end
-end
-
 describe Kungfuig::Jobber do
   let(:test) { Test.new }
+  let(:test_module_test) { TestModuleTest.new }
 
   it 'accepts YAML for bulk jobber' do
     yaml = <<YAML
@@ -66,6 +56,25 @@ YAML
     [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
       expect(TestWorker.jobs.size).to eq idx
       expect(test.yo(args)).to be_truthy
+      sleep 0.5
+      expect(TestWorker.jobs.size).to eq(idx + 1)
+    end
+    expect(TestWorker.jobs.size).to eq 3
+    TestWorker.drain
+    expect(TestWorker.jobs.size).to eq 0
+  end
+
+  it 'handles pointcuts from included modules properly' do
+    yaml = <<YAML
+'TestModuleTest':
+  'yo': 'TestWorker'
+YAML
+    expect(Kungfuig::Jobber.bulk(yaml)).to be_truthy
+    expect(TestWorker.jobs.size).to eq 0
+
+    [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
+      expect(TestWorker.jobs.size).to eq idx
+      expect(test_module_test.yo(args)).to be_truthy
       sleep 0.5
       expect(TestWorker.jobs.size).to eq(idx + 1)
     end

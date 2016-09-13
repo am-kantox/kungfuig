@@ -45,7 +45,7 @@ module Kungfuig
     #   — class (String, Symbol or Class), method name (String, Symbol)
     #   — instance (Object), method name (String, Symbol)
     def initialize *args, **params
-      @λ = { before: nil, after: nil, on_hook: nil }
+      @λ = { before: nil, after: nil, on_hook: nil, on_error: nil }
       @klazz, @method, @receiver =  case args.size
                                     when 1
                                       case args.first
@@ -128,6 +128,7 @@ module Kungfuig
           end
         end
       end
+
       klazz.send(:include, Kungfuig) unless klazz.ancestors.include? Kungfuig
       klazz.send(:prepend, p)
     rescue => e
