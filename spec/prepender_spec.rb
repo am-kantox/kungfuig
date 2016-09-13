@@ -26,7 +26,7 @@ describe Kungfuig::Prepender do
 
   it 'is not throwing an exception' do
     Kungfuig::Prepender.anteponer :test, :yo do |**_|
-      raise "NEVER THROWN"
+      fail "NEVER THROWN"
     end
     expect { test.yo(42) }.not_to raise_error
   end
@@ -48,7 +48,7 @@ describe Kungfuig::Prepender do
       puts "I’d been called. Params: #{params.inspect}"
     end.on_hook do |*args|
       puts "Hook: #{args}"
-    end
+    end.hook!
     sleep 3
     class Hooked < Test
     end

@@ -54,7 +54,7 @@ module Kungfuig
 
       { before: before, after: after }.each do |k, var|
         H.new.value_to_method_list(klazz, var, exclude).each do |m|
-          Kungfuig::Prepender.new(to, m).public_send(k, &cb)
+          Kungfuig::Prepender.new(to, m).public_send(k, &cb).hook!
         end unless var.nil?
       end
 

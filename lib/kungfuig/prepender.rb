@@ -31,7 +31,7 @@ module Kungfuig
 
       def anteponer *args
         fail MalformedTarget.new "Factory requires a block; use Prepender#new for more accurate tuning", args unless block_given?
-        Prepender.new(*args, &Proc.new)
+        Prepender.new(*args, &Proc.new).hook!
       end
     end
 
@@ -69,17 +69,18 @@ module Kungfuig
 
       fail MalformedTarget.new "Unable to lookup class", args unless @klazz
       fail MalformedTarget.new "Unable to lookup method", args unless @method
-
-      postpone_hook
     end
 
     def before λ = nil
-      @λ[__callee__] = λ || (block_given? ? Proc.new : nil)
-      self
+      tap { @λ[__callee__] = λ || (block_given? ? Proc.new : nil) }
     end
     alias_method :after, :before
     alias_method :on_hook, :before
     alias_method :on_error, :before
+
+    def hook!
+      tap { postpone_hook }
+    end
 
     protected
 

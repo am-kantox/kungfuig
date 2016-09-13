@@ -139,7 +139,7 @@ module Kungfuig
       fail ArgumentError.new "Aspect must have a codeblock" unless block_given?
       fail NoMethodError.new "Aspect must be attached to existing method" unless instance_methods.include? meth.to_sym
 
-      Kungfuig::Prepender.new(self, meth).public_send((after ? :after : :before), &Proc.new)
+      Kungfuig::Prepender.new(self, meth).public_send((after ? :after : :before), &Proc.new).hook!
     end
 
     def aspects
