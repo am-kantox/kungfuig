@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'pry'
 require 'rspec'
 require 'kungfuig'
+# require 'mock_redis'
 
 require 'codeclimate-test-reporter'
 CodeClimate::TestReporter.start
@@ -14,7 +15,11 @@ module TestModule
 end
 
 RSpec.configure do |config|
+  config.mock_with :flexmock
+
   config.before(:each) do
+    # Sidekiq.redis = MockRedis.new
+    # Sidekiq.redis(&:flushdb)
     Sidekiq::Worker.clear_all if Kernel.const_defined?('Sidekiq::Worker')
     Object.send(:remove_const, 'TestChild') if Kernel.const_defined?('TestChild')
     Object.send(:remove_const, 'Test') if Kernel.const_defined?('Test')

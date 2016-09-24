@@ -1,8 +1,10 @@
-require_relative './aspector'
+require 'digest'
 require 'rubygems/exceptions'
+require 'kungfuig/aspector'
 
 begin
   require 'sidekiq'
+  require 'sidekiq/api'
   fail LoadError.new unless Kernel.const_defined?('Sidekiq')
 rescue LoadError
   raise(Gem::DependencyError, "Sidekiq id required to use this functionality!")
@@ -32,6 +34,7 @@ module Kungfuig
       # 'Test':
       #   '*': 'YoJob'
       def bulk(hos)
+        @delayed ||= {}
         @hash = Kungfuig.load_stuff hos
         Kungfuig::Aspector.bulk(
           @hash.map do |klazz, hash|
@@ -53,15 +56,41 @@ module Kungfuig
           @hash[c.name] && @hash[c.name][method]
         end)
 
-        destination = Kernel.const_get(@hash[receiver_class.name][method])
+        destination = Kernel.const_get(destination(receiver_class.name, method))
         destination.send(:prepend, Kungfuig::Worker) unless destination.ancestors.include? Kungfuig::Worker
-        destination.perform_async(receiver: r, method: method, result: result, **params)
+        if (delay = delay(receiver_class.name, method))
+          digest = digest(result, receiver_class.name, method)
+          Sidekiq::Queue.new(destination.sidekiq_options_hash['queue'])
+                        .find_job(@delayed.delete(digest)).tap { |j| j.delete if j }
+          @delayed[digest] = destination.perform_in(delay, receiver: r, method: method, result: result, **params)
+        else
+          destination.perform_async(receiver: r, method: method, result: result, **params)
+        end
       rescue => e
         Kungfuig.✍(receiver: [
           "Fail [#{e.message}]",
           *e.backtrace.unshift("Backtrace:").join("#{$/}⮩  "),
           "while #{receiver}"
         ].join($/), method: method, result: result, args: params)
+      end
+
+      def destination target, name
+        case @hash[target][name]
+        when NilClass then nil
+        when String, Symbol then @hash[target][name]
+        when Hash then @hash[target][name]['class']
+        end
+      end
+
+      def delay target, name
+        @hash[target][name].is_a?(Hash) && @hash[target][name]['delay'].to_i || nil
+      end
+
+      def digest result, target, name
+        fields = @hash[target][name].is_a?(Hash) && @hash[target][name]['compare_by']
+        Digest::SHA256.hexdigest(
+          (fields.nil? ? result : fields.map { |f| result[f] }).inspect
+        )
       end
     end
   end
