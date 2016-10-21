@@ -45,7 +45,7 @@ describe Kungfuig::Jobber do
     [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
       expect(TestWorker.jobs.size).to eq idx
       expect(test.yo(args)).to be_truthy
-      sleep 0.5
+      sleep 0.1
       expect(TestWorker.jobs.size).to eq(idx + 1)
     end
     expect(TestWorker.jobs.size).to eq 3
@@ -60,7 +60,7 @@ describe Kungfuig::Jobber do
     [[42], [42, :p1, :p2], [42, :p1, :p2, sp1: 1, sp2: 1]].each.with_index do |args, idx|
       expect(TestWorker.jobs.size).to eq idx
       expect(test_module_test.yo(args)).to be_truthy
-      sleep 0.5
+      sleep 0.1
       expect(TestWorker.jobs.size).to eq(idx + 1)
     end
     expect(TestWorker.jobs.size).to eq 3
@@ -69,19 +69,9 @@ describe Kungfuig::Jobber do
   end
 
   it 'stacks subsequent same jobs and execute the only one after 1 minute' do
-    # flexmock(Sidekiq::Queue).new_instances
-    #                         .should_receive(:find_job)
-    #                         .and_return('3cbfd0680a65d9f9c92834897280bfd146b4872c69edf2e05b948da5942949c4')
     Sidekiq::Testing.inline! do
       expect(Kungfuig::Jobber.bulk(test_worker_param_yaml)).to be_truthy
-      expect(TestWorker.jobs.size).to eq 0
-
-      5.times do
-        expect(test.yo([42, :p1, :p2, sp1: 1, sp2: 1])).to be_truthy
-      end
-      # expect(TestWorker.jobs.size).to eq 1
-      sleep 5
-      expect(TestWorker.jobs.size).to eq 0
+      expect { test.yo([42, :p1, :p2, sp1: 1, sp2: 1]) }.to output(/★/).to_stdout
     end
   end
 end

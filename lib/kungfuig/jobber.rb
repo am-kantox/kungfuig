@@ -45,8 +45,20 @@ module Kungfuig
       prepend Kungfuig::Worker
 
       def perform digest: nil, worker: nil
-        params = Sidekiq.redis { |redis| redis.get(digest) }
-        worker.perform_async(**params) if params
+        params = Sidekiq.redis do |redis|
+          redis.multi do
+            redis.get(digest)
+            redis.del(digest)
+          end
+        end
+        Kernel.const_get(worker).perform_async(atomize_keys(params.first)) if params.last > 0
+      end
+
+      private
+
+      def atomize_keys params
+        params = JSON.parse(params) if params.is_a?(String)
+        params.map { |k, v| [k.to_sym, v] }.to_h
       end
     end
 
