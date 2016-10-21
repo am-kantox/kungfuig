@@ -30,11 +30,42 @@ module Kungfuig
 
   # Generic helper for massive attaching aspects
   class Jobber
+    RESPOND_TO = ->(m, r) { r.respond_to? m.to_sym }
+
+    class Dummy
+      prepend Kungfuig::Worker
+
+      def perform digest: nil, delay: nil, worker: nil, worker_params: nil
+        Sidekiq.redis { |redis| redis.set(digest, worker_params.to_json) }
+        DummyExecutor.perform_in(delay, digest: digest, worker: worker)
+      end
+    end
+
+    class DummyExecutor
+      prepend Kungfuig::Worker
+
+      def perform digest: nil, worker: nil
+        params = Sidekiq.redis do |redis|
+          redis.multi do
+            redis.get(digest)
+            redis.del(digest)
+          end
+        end
+        Kernel.const_get(worker).perform_async(atomize_keys(params.first)) if params.last > 0
+      end
+
+      private
+
+      def atomize_keys params
+        params = JSON.parse(params) if params.is_a?(String)
+        params.map { |k, v| [k.to_sym, v] }.to_h
+      end
+    end
+
     class << self
       # 'Test':
       #   '*': 'YoJob'
       def bulk(hos)
-        @delayed ||= {}
         @hash = Kungfuig.load_stuff hos
         Kungfuig::Aspector.bulk(
           @hash.map do |klazz, hash|
@@ -44,27 +75,21 @@ module Kungfuig
       end
 
       def bottleneck(method: nil, receiver: nil, result: nil, **params)
-        respond_to = ->(m, r) { r.respond_to? m.to_sym }
-
-        r = case receiver
-            when Hash, Array, String then receiver
-            when respond_to.curry[:to_hash] then receiver.to_hash
-            when respond_to.curry[:to_h] then receiver.to_h
-            else receiver
-            end
         return unless (receiver_class = receiver.class.ancestors.detect do |c|
           @hash[c.name] && @hash[c.name][method]
         end)
 
-        destination = Kernel.const_get(destination(receiver_class.name, method))
-        destination.send(:prepend, Kungfuig::Worker) unless destination.ancestors.include? Kungfuig::Worker
+        r, worker = patch_receiver(receiver_class.name, method)
+        worker_params = { receiver: r, method: method, result: result, **params }
         if (delay = delay(receiver_class.name, method))
-          digest = digest(result, receiver_class.name, method)
-          Sidekiq::Queue.new(destination.sidekiq_options_hash['queue'])
-                        .find_job(@delayed.delete(digest)).tap { |j| j.delete if j }
-          @delayed[digest] = destination.perform_in(delay, receiver: r, method: method, result: result, **params)
+          Dummy.perform_async(
+            digest: digest(result, receiver_class.name, method),
+            delay: delay,
+            worker: worker,
+            worker_params: worker_params
+          )
         else
-          destination.perform_async(receiver: r, method: method, result: result, **params)
+          worker.perform_async(worker_params)
         end
       rescue => e
         Kungfuig.✍(receiver: [
@@ -74,12 +99,26 @@ module Kungfuig
         ].join($/), method: method, result: result, args: params)
       end
 
-      def destination target, name
-        case @hash[target][name]
-        when NilClass then nil
-        when String, Symbol then @hash[target][name]
-        when Hash then @hash[target][name]['class']
+      ##########################################################################
+
+      def primitivize(receiver)
+        case receiver
+        when Hash, Array, String then receiver
+        when RESPOND_TO.curry[:to_hash] then receiver.to_hash
+        when RESPOND_TO.curry[:to_h] then receiver.to_h
+        else receiver
         end
+      end
+
+      def patch_receiver target, name
+        klazz = case @hash[target][name]
+                when String, Symbol then @hash[target][name]
+                when Hash then @hash[target][name]['class']
+                else return
+                end
+        [klazz, Kernel.const_get(klazz).tap do |c|
+          c.send(:prepend, Kungfuig::Worker) unless c.ancestors.include? Kungfuig::Worker
+        end]
       end
 
       def delay target, name

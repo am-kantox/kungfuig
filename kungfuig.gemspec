@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'hashie', '~> 3'
   spec.add_dependency 'sidekiq', '~> 3.5', '>= 3.5.2'
+  spec.add_dependency 'redis', '~> 3.2'
 
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'rake', '~> 10.0'
@@ -34,5 +35,5 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'rspec-sidekiq', '~> 2'
   spec.add_development_dependency 'flexmock', '~> 1.3'
-  # spec.add_development_dependency 'mock_redis', '~> 0.17'
+  spec.add_development_dependency 'mock_redis', '~> 0.17'
 end

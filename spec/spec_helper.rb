@@ -57,8 +57,8 @@ RSpec.configure do |config|
 end
 
 class TestWorker
-  def perform *args, **params
-    Kungfuig.✍(receiver: "TestWorker :: got args «#{args.inspect}» and params «#{params.inspect}»")
+  def perform **params
+    Kungfuig.✍(**params)
   end
 end
 
