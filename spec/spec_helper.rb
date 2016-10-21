@@ -58,7 +58,7 @@ end
 
 class TestWorker
   def perform *args, **params
-    print "★"
+    puts "★"
   end
 end
 
