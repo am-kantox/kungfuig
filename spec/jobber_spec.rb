@@ -71,7 +71,7 @@ describe Kungfuig::Jobber do
   it 'stacks subsequent same jobs and execute the only one after 1 minute' do
     Sidekiq::Testing.inline! do
       expect(Kungfuig::Jobber.bulk(test_worker_param_yaml)).to be_truthy
-      expect { test.yo([42, :p1, :p2, sp1: 1, sp2: 1]) }.to output(/★/).to_stdout
+      expect(test.yo([42, :p1, :p2, sp1: 1, sp2: 1])).to be_truthy
     end
   end
 end

@@ -57,8 +57,8 @@ RSpec.configure do |config|
 end
 
 class TestWorker
-  def perform *args, **params
-    puts "★"
+  def perform **params
+    Kungfuig.✍(**params)
   end
 end
 
