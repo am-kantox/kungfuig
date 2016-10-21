@@ -17,13 +17,13 @@ Metrics/LineLength:
   Max: 180
 
 Metrics/MethodLength:
-  Max: 42
+  Max: 50
 
 Metrics/PerceivedComplexity:
-  Max: 20
+  Max: 30
 
 Metrics/AbcSize:
-  Max: 42
+  Max: 50
 
 Style/EmptyCaseCondition:
   Exclude:
