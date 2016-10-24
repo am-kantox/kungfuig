@@ -2,7 +2,6 @@ require 'yaml'
 require 'hashie'
 
 require 'kungfuig/version'
-require 'kungfuig/color'
 require 'kungfuig/aspector'
 require 'kungfuig/prepender'
 
@@ -12,11 +11,7 @@ module Kungfuig
   # rubocop:disable Style/MethodName
   def ✍(receiver: nil, method: nil, result: nil, args: nil, **params)
     require 'logger'
-    @✍ ||= Kernel.const_defined?('Rails') && Rails.logger || Logger.new($stdout)
-    message = receiver.is_a?(String) ? "#{receiver} | #{method}" : "#{receiver.class}##{method}"
-    "#{Color.to_xterm256(message, :info)} called with «#{Color.to_xterm256(args.inspect, :success)}» and returned «#{result || 'nothing (was it before aspect?)'}»".tap do |m|
-      @✍.debug m
-    end
+    Logger.new($stdout).debug({receiver: receiver, method: method, result: result, args: args, **params}.inspect)
   end
   module_function :✍
   # rubocop:enable Style/MethodName
