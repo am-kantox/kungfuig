@@ -83,7 +83,7 @@ module Kungfuig
         worker_params = { receiver: receiver, method: method, result: result, **params }
         if (delay = delay(receiver_class.name, method))
           Dummy.perform_async(
-            digest: digest(result, receiver_class.name, method),
+            digest: digest(receiver, receiver_class.name, method),
             delay: delay,
             worker: worker.to_s,
             worker_params: worker_params
