@@ -51,7 +51,7 @@ module Kungfuig
             redis.del(digest)
           end
         end
-        Kernel.const_get(worker).perform_async(**atomize_keys(params.first)) if params.last > 0
+        Kernel.const_get(worker).perform_async(atomize_keys(params.first)) if params.last > 0
       end
 
       private
@@ -79,13 +79,13 @@ module Kungfuig
           @hash[c.name] && @hash[c.name][method]
         end)
 
-        r, worker = patch_receiver(receiver_class.name, method)
-        worker_params = { receiver: r, method: method, result: result, **params }
+        receiver, worker = patch_receiver(receiver, receiver_class.name, method)
+        worker_params = { receiver: receiver, method: method, result: result, **params }
         if (delay = delay(receiver_class.name, method))
           Dummy.perform_async(
             digest: digest(result, receiver_class.name, method),
             delay: delay,
-            worker: r,
+            worker: worker.to_s,
             worker_params: worker_params
           )
         else
@@ -101,22 +101,21 @@ module Kungfuig
 
       ##########################################################################
 
-      def primitivize(receiver)
-        case receiver
-        when Hash, Array, String then receiver
-        when RESPOND_TO.curry[:to_hash] then receiver.to_hash
-        when RESPOND_TO.curry[:to_h] then receiver.to_h
-        else receiver
-        end
-      end
+      def patch_receiver(receiver, target, name)
+        r =     case receiver
+                when Hash, Array, String then receiver
+                when RESPOND_TO.curry[:to_hash] then receiver.to_hash
+                when RESPOND_TO.curry[:to_h] then receiver.to_h
+                else receiver
+                end
 
-      def patch_receiver target, name
         klazz = case @hash[target][name]
                 when String, Symbol then @hash[target][name]
                 when Hash then @hash[target][name]['class']
                 else return
                 end
-        [klazz, Kernel.const_get(klazz).tap do |c|
+
+        [r, Kernel.const_get(klazz).tap do |c|
           c.send(:prepend, Kungfuig::Worker) unless c.ancestors.include? Kungfuig::Worker
         end]
       end
