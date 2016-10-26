@@ -30,6 +30,7 @@ module Kungfuig
       rescue
         raise ArgumentError, "#{__callee__} expects valid YAML configuration string (misspelled file name?). Got:\n#{hos.inspect}"
       end
+    when ->(h) { h.respond_to?(:to_h) } then Hashie::Mash.new(h.to_h)
     when ->(h) { h.respond_to?(:to_hash) } then Hashie::Mash.new(h.to_hash)
     else
       fail ArgumentError.new "#{__callee__} accepts either String or Hash as parameter."
