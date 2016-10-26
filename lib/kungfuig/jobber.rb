@@ -32,11 +32,23 @@ module Kungfuig
   class Jobber
     RESPOND_TO = ->(m, r) { r.respond_to? m.to_sym }
 
+    # this is an ugly hack unless I understand why digest gets corrupted sometimes
+    class UglyHack
+      def self.cleanup_digest(digest)
+        case digest
+        when String then digest
+        when Symbol then digest.to_s
+        when Hash then digest[:digest] || digest['digest'] || digest.inspect
+        else digest.inspect
+        end
+      end
+    end
+
     class Dummy
       prepend Kungfuig::Worker
 
       def perform digest: nil, delay: nil, worker: nil, worker_params: nil
-        digest = cleanup_digest(digest)
+        digest = UglyHack.cleanup_digest(digest)
         Sidekiq.redis { |redis| redis.set(digest, worker_params.to_json) }
         DummyExecutor.perform_in(delay, digest: digest, worker: worker)
       end
@@ -46,7 +58,7 @@ module Kungfuig
       prepend Kungfuig::Worker
 
       def perform digest: nil, worker: nil
-        digest = cleanup_digest(digest)
+        digest = UglyHack.cleanup_digest(digest)
         params = Sidekiq.redis do |redis|
           redis.multi do
             redis.get(digest)
@@ -132,16 +144,6 @@ module Kungfuig
         Digest::SHA256.hexdigest(
           (fields.nil? ? result : fields.map { |f| result[f] }).inspect
         )
-      end
-
-      # this is an ugly hack unless I understand why digest gets corrupted sometimes
-      def cleanup_digest(digest)
-        case digest
-        when String then digest
-        when Symbol then digest.to_s
-        when Hash then digest[:digest] || digest['digest'] || digest.inspect
-        else digest.inspect
-        end
       end
     end
   end
