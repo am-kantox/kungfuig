@@ -36,6 +36,7 @@ module Kungfuig
       prepend Kungfuig::Worker
 
       def perform digest: nil, delay: nil, worker: nil, worker_params: nil
+        digest = cleanup_digest(digest)
         Sidekiq.redis { |redis| redis.set(digest, worker_params.to_json) }
         DummyExecutor.perform_in(delay, digest: digest, worker: worker)
       end
@@ -45,13 +46,14 @@ module Kungfuig
       prepend Kungfuig::Worker
 
       def perform digest: nil, worker: nil
+        digest = cleanup_digest(digest)
         params = Sidekiq.redis do |redis|
           redis.multi do
             redis.get(digest)
             redis.del(digest)
           end
         end
-        Kernel.const_get(worker).perform_async(atomize_keys(params.first)) if params.last > 0
+        Kernel.const_get(worker).perform_async(**atomize_keys(params.first)) if params.last > 0
       end
 
       private
@@ -130,6 +132,16 @@ module Kungfuig
         Digest::SHA256.hexdigest(
           (fields.nil? ? result : fields.map { |f| result[f] }).inspect
         )
+      end
+
+      # this is an ugly hack unless I understand why digest gets corrupted sometimes
+      def cleanup_digest(digest)
+        case digest
+        when String then digest
+        when Symbol then digest.to_s
+        when Hash then digest[:digest] || digest['digest'] || digest.inspect
+        else digest.inspect
+        end
       end
     end
   end
