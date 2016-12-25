@@ -4,8 +4,11 @@ require 'rspec'
 require 'kungfuig'
 # require 'mock_redis'
 
-require 'codeclimate-test-reporter'
-CodeClimate::TestReporter.start
+# require 'codeclimate-test-reporter'
+# CodeClimate::TestReporter.start
+
+require 'simplecov'
+SimpleCov.start
 
 module TestModule
   def yo *args, **params
